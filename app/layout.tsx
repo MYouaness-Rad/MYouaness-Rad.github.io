@@ -25,6 +25,7 @@ const sourceSans = Source_Sans_3({
 // Metadata
 // --------------------
 export const metadata: Metadata = {
+  metadataBase: new URL("https://MYouaness-Rad.github.io"),
   title: "Mina Youaness - Full-Stack Developer",
   description:
     "Resume of Mina Youaness, Full-Stack Web Developer with 10+ years of experience in Angular, React, Node.js, and scalable web applications.",
