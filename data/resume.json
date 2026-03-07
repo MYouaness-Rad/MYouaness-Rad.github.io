@@ -12,6 +12,54 @@
     {
       "id": 1,
       "title": "Full-Stack Web Developer",
+      "company": "RADWELL INTERNATIONAL",
+      "startDate": "Jan 2026",
+      "endDate": "Current",
+      "description": "Developing and maintaining internal customer portal applications - comprehensive web-based product lifecycle management and analytics platforms for industrial automation equipment distribution. Built with microservices architecture on the backend and shadcn/ui component library on the frontend, enabling customers to track inventory, monitor product lifecycles, and manage multi-location operations.",
+      "achievements": [
+        "Architected and developed complete customer portal dashboard redesign, implementing Figma-based design system with responsive layouts, theme management, and consistent UI components across desktop, tablet, and mobile breakpoints.",
+        "Built comprehensive data visualization system using Recharts, creating interactive charts and metric dashboards for real-time business intelligence and analytics, enabling data-driven decision making.",
+        "Developed centralized state management architecture using React Context API, implementing shared state management patterns that reduced code complexity and improved application maintainability.",
+        "Implemented advanced filtering and search capabilities with multi-dimensional filtering, location-based filters, and dynamic UI components, enabling users to efficiently filter and analyze large datasets.",
+        "Created reusable component library using shadcn/ui and Radix UI primitives with Tailwind CSS, establishing consistent design system that accelerated development and ensured UI consistency across the application.",
+        "Integrated Google Maps API with custom interactive features and real-time location synchronization, enabling geographic visualization of inventory across multiple warehouse locations.",
+        "Developed comprehensive testing infrastructure using Jest and React Testing Library, achieving high test coverage for components, custom hooks, and state management logic, ensuring code quality and reliability.",
+        "Built customer support features including contact forms with validation, reCAPTCHA integration, and API integration for ticket submission, improving customer communication channels.",
+        "Implemented issue reporting functionality with form handling, validation, and backend API integration, enabling users to report problems directly from the application interface.",
+        "Developed backend microservices using .NET Core and Entity Framework Core, creating REST API endpoints for catalog management, implementing database migrations, and managing data across distributed services.",
+        "Optimized API performance through caching strategies, request optimization, and efficient data fetching patterns, significantly reducing load times and improving user experience.",
+        "Integrated OpenAPI TypeScript code generation for type-safe API client generation, ensuring consistency between frontend and backend contracts and reducing integration errors.",
+        "Refactored application architecture by implementing modular component structure and navigation patterns, improving code organization and enabling scalable feature development.",
+        "Enhanced UI/UX through theme system improvements, implementing CSS custom properties for consistent styling, improving accessibility standards, and optimizing responsive design for mobile-first approach.",
+        "Collaborated with cross-functional teams including product managers, designers, and backend developers, participating in code reviews, addressing feedback, and delivering production-ready features on schedule."
+      ],
+      "technologies": [
+        "Next.js 15",
+        "React 19",
+        "TypeScript",
+        "Tailwind CSS",
+        "React Google Maps API",
+        "Recharts",
+        "shadcn/ui",
+        "Radix UI",
+        "Jest",
+        "React Testing Library",
+        ".NET Core",
+        "Entity Framework Core",
+        "C#",
+        "RESTful APIs",
+        "SQL Server",
+        "OpenAPI",
+        "Context API",
+        "Custom Hooks",
+        "Component Architecture",
+        "MSAL Authentication",
+        "Webpack"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Full-Stack Web Developer",
       "company": "HARPLABS INC.",
       "startDate": "Feb 2023",
       "endDate": "April 2025",
@@ -53,7 +101,7 @@
       ]
     },
     {
-      "id": 2,
+      "id": 3,
       "title": "Full-Stack Web Developer (Contract for Turris Group)",
       "company": "TURRIS GROUP",
       "startDate": "May 2022",
@@ -72,7 +120,7 @@
       ]
     },
     {
-      "id": 3,
+      "id": 4,
       "title": "Full-Stack Web Developer",
       "company": "QUAENET",
       "startDate": "May 2018",
@@ -120,7 +168,7 @@
       ]
     },
     {
-      "id": 5,
+      "id": 6,
       "title": "Full-Stack Web Developer (Freelance)",
       "company": "CADUCEUS LANE",
       "startDate": "April 2016",
@@ -205,7 +253,7 @@
     {
       "degree": "Bachelor of Computer Science",
       "institution": "College of Computing & Information Technology",
-      "year": ""
+      "year": "2012"
     }
   ],
   "certifications": [

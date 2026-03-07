@@ -2,69 +2,52 @@
 @import "tw-animate-css";
 
 :root {
-  /* VSCode Dark Theme Colors */
-  --vscode-bg: #1e1e1e;
-  --vscode-sidebar: #252526;
-  --vscode-tab: #2d2d30;
-  --vscode-border: #3e3e42;
-  --vscode-text: #d4d4d4;
-  --vscode-text-muted: #969696;
-  --vscode-blue: #007acc;
-  --vscode-blue-light: #58a6ff;
-  --vscode-green: #4ec9b0;
-  --vscode-yellow: #dcb67a;
-  --vscode-orange: #ce9178;
-  --vscode-purple: #c586c0;
+  /* This block should be your default "dark" theme,
+     which is what the resume will look like on initial load. */
+  --background: #1e1e1e;
+  --foreground: #d4d4d4;
+  --card: #252526;
+  --card-foreground: #d4d4d4;
+  --popover: #2d2d30;
+  --popover-foreground: #d4d4d4;
+  --primary: #d4d4d4;
+  --primary-foreground: #1e1e1e;
+  --secondary: #3e3e42;
+  --secondary-foreground: #d4d4d4;
+  --muted: #3e3e42;
+  --muted-foreground: #969696;
+  --accent: #007acc;
+  --accent-foreground: #ffffff;
+  --destructive: #f44747;
+  --destructive-foreground: #1e1e1e;
+  --border: #3e3e42;
+  --input: #3e3e42;
+  --ring: #007acc;
+  --chart-1: #007acc;
+  --chart-2: #4ec9b0;
+  --chart-3: #dcb67a;
+  --chart-4: #ce9178;
+  --chart-5: #c586c0;
+  --radius: 0.625rem;
+  --sidebar: #252526;
+  --sidebar-foreground: #d4d4d4;
+  --sidebar-primary: #d4d4d4;
+  --sidebar-primary-foreground: #1e1e1e;
+  --sidebar-accent: #007acc;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #3e3e42;
+  --sidebar-ring: #007acc;
+
+  /* VSCode Dark Syntax Colors */
   --vscode-keyword: #569cd6;
   --vscode-string: #ce9178;
   --vscode-comment: #6a9955;
+  --vscode-function: #dcb67a;
+  --vscode-variable: #9cdcfe;
   --vscode-error: #f44747;
   --vscode-warning: #ffcc02;
-
-  /* Added default theme values to prevent same colors on initial load */
-  --bg-primary: #1e1e1e; /* Main background - VS Code editor */
-  --bg-secondary: #2d2d30; /* Secondary background - VS Code tab bar */
-  --bg-tertiary: #252526; /* Tertiary background - VS Code sidebar */
-  --text-primary: #d4d4d4;
-  --text-secondary: #969696;
-  --border-color: #3e3e42;
-  --accent-color: #007acc;
-
-  /* Updated color tokens to match professional resume design brief */
-  --background: oklch(1 0 0); /* #ffffff */
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
 }
+
 
 .dark {
   --background: oklch(0.145 0 0);
@@ -365,18 +348,50 @@ html {
 }
 
 /* Theme classes for proper theme switching */
+/* Theme classes for proper theme switching */
 .theme-light {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --vscode-bg: #ffffff;
-  --vscode-sidebar: #f3f3f3;
-  --vscode-tab: #e8e8e8;
-  --vscode-border: #d1d1d1;
-  --vscode-text: #333333;
-  --vscode-text-muted: #666666;
-  --accent-color: #007acc;
+  /* VSCode Light Theme */
+  --background: #ffffff;
+  --foreground: #333333;
+  --card: #f3f3f3;
+  --card-foreground: #333333;
+  --popover: #f3f3f3;
+  --popover-foreground: #333333;
+  --primary: #333333;
+  --primary-foreground: #ffffff;
+  --secondary: #e8e8e8;
+  --secondary-foreground: #333333;
+  --muted: #e8e8e8;
+  --muted-foreground: #666666;
+  --accent: #007acc;
+  --accent-foreground: #ffffff;
+  --destructive: #e74c3c;
+  --destructive-foreground: #ffffff;
+  --border: #d1d1d1;
+  --input: #e8e8e8;
+  --ring: #007acc;
+  --chart-1: #007acc;
+  --chart-2: #89b482;
+  --chart-3: #ce893b;
+  --chart-4: #c2503a;
+  --chart-5: #b974a6;
+  --sidebar: #f3f3f3;
+  --sidebar-foreground: #333333;
+  --sidebar-primary: #333333;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #007acc;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #d1d1d1;
+  --sidebar-ring: #007acc;
+
+  /* VSCode Light Syntax Colors */
+  --vscode-keyword: #0000ff;
+  --vscode-string: #a31515;
+  --vscode-comment: #008000;
+  --vscode-function: #795e26;
+  --vscode-variable: #0070c1;
+  --vscode-error: #e74c3c;
+  --vscode-warning: #ffcc02;
 }
 
 .theme-dark {
@@ -401,49 +416,91 @@ html {
 }
 
 .theme-high-contrast {
-  --bg-primary: #000000;
-  --bg-secondary: #1a1a1a; /* More distinct secondary background */
-  --bg-tertiary: #333333; /* Even more distinct tertiary background */
-  --text-primary: #ffffff;
-  --text-secondary: #cccccc;
-  --border-color: #ffffff;
-  --accent-color: #00d4ff;
-
+  /* VSCode High Contrast Theme */
   --background: #000000;
   --foreground: #ffffff;
   --card: #000000;
   --card-foreground: #ffffff;
-  --vscode-bg: #000000;
-  --vscode-sidebar: #000000;
-  --vscode-tab: #1a1a1a;
-  --vscode-border: #ffffff;
-  --vscode-text: #ffffff;
-  --vscode-text-muted: #cccccc;
-  --vscode-blue: #00d4ff;
+  --popover: #1a1a1a;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #333333;
+  --secondary-foreground: #ffffff;
+  --muted: #333333;
+  --muted-foreground: #cccccc;
+  --accent: #00d4ff;
+  --accent-foreground: #000000;
+  --destructive: #ff0000;
+  --destructive-foreground: #000000;
+  --border: #ffffff;
+  --input: #ffffff;
+  --ring: #ffffff;
+  --chart-1: #00d4ff;
+  --chart-2: #ffea00;
+  --chart-3: #ff6a00;
+  --chart-4: #ff0000;
+  --chart-5: #ff00ff;
+  --sidebar: #000000;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #00d4ff;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #ffffff;
+  --sidebar-ring: #ffffff;
+
+  /* VSCode High Contrast Syntax Colors */
+  --vscode-keyword: #569cd6;
+  --vscode-string: #ce9178;
+  --vscode-comment: #6a9955;
+  --vscode-function: #dcb67a;
+  --vscode-variable: #9cdcfe;
+  --vscode-error: #f44747;
+  --vscode-warning: #ffcc02;
 }
 
 .theme-monokai {
-  --bg-primary: #272822; /* Main Monokai background */
-  --bg-secondary: #383a2e; /* More distinct secondary background */
-  --bg-tertiary: #2f3129; /* Tertiary background */
-  --text-primary: #f8f8f2;
-  --text-secondary: #75715e;
-  --border-color: #49483e;
-  --accent-color: #66d9ef;
-
+  /* Monokai Theme */
   --background: #272822;
   --foreground: #f8f8f2;
   --card: #2f3129;
   --card-foreground: #f8f8f2;
-  --vscode-bg: #272822;
-  --vscode-sidebar: #2f3129;
-  --vscode-tab: #383a2e;
-  --vscode-border: #49483e;
-  --vscode-text: #f8f8f2;
-  --vscode-text-muted: #75715e;
-  --vscode-blue: #66d9ef;
-  --vscode-green: #a6e22e;
-  --vscode-yellow: #e6db74;
-  --vscode-orange: #fd971f;
-  --vscode-purple: #ae81ff;
+  --popover: #383a2e;
+  --popover-foreground: #f8f8f2;
+  --primary: #f8f8f2;
+  --primary-foreground: #272822;
+  --secondary: #383a2e;
+  --secondary-foreground: #f8f8f2;
+  --muted: #383a2e;
+  --muted-foreground: #75715e;
+  --accent: #66d9ef;
+  --accent-foreground: #272822;
+  --destructive: #f92672;
+  --destructive-foreground: #f8f8f2;
+  --border: #49483e;
+  --input: #49483e;
+  --ring: #66d9ef;
+  --chart-1: #66d9ef;
+  --chart-2: #a6e22e;
+  --chart-3: #e6db74;
+  --chart-4: #fd971f;
+  --chart-5: #ae81ff;
+  --sidebar: #2f3129;
+  --sidebar-foreground: #f8f8f2;
+  --sidebar-primary: #f8f8f2;
+  --sidebar-primary-foreground: #272822;
+  --sidebar-accent: #66d9ef;
+  --sidebar-accent-foreground: #272822;
+  --sidebar-border: #49483e;
+  --sidebar-ring: #66d9ef;
+
+  /* Monokai Syntax Colors */
+  --vscode-keyword: #f92672;
+  --vscode-string: #e6db74;
+  --vscode-comment: #75715e;
+  --vscode-function: #a6e22e;
+  --vscode-variable: #66d9ef;
+  --vscode-error: #f92672;
+  --vscode-warning: #ffcc02;
 }
