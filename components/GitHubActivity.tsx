@@ -184,7 +184,12 @@ const generateContributions = (events: ActivityEvent[]): Contribution[] => {
     return contributions
   }
 
-const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
+interface GitHubActivityProps {
+  username: string
+  emails?: string[] // Optional array of email addresses to fetch commits for
+}
+
+const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }) => {
   const [repos, setRepos] = useState<Repo[]>([])
   const [stats, setStats] = useState<GitHubStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -194,6 +199,9 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
   const [hasPrivateAccess, setHasPrivateAccess] = useState(false)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const { resumeData } = useResumeData()
+  
+  // Default emails if not provided
+  const authorEmails = emails.length > 0 ? emails : ['minaragaie@hotmail.com', 'myouaness@radwell.com']
 
   // Map repo name -> project slug for quick lookup (based on githubUrl)
   const projectRepoNameToSlug = useMemo(() => {
@@ -272,14 +280,16 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
             .slice(0, 10)
           
           // Fetch commits with rate limiting (sequential with delay)
+          // Fetch commits for all email addresses
           commitEvents = []
           for (const repo of topRepos) {
             try {
-              // Fetch commits from the last year, authored by the user
+              // Fetch commits from the last year, authored by the user (by username first)
               const since = new Date()
               since.setFullYear(since.getFullYear() - 1)
               const sinceISO = since.toISOString()
               
+              // Fetch commits by username
               const commitsResponse = await fetch(
                 `https://api.github.com/repos/${repo.full_name}/commits?author=${username}&since=${sinceISO}&per_page=100`,
                 {
@@ -298,8 +308,18 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
               
               if (commitsResponse.ok) {
                 const commits = await commitsResponse.json()
-                console.log(`✅ Fetched ${commits.length} commits from ${repo.full_name}`)
-                commits.forEach((commit: any) => {
+                console.log(`✅ Fetched ${commits.length} commits from ${repo.full_name} (by username)`)
+                
+                // Filter commits by email addresses if provided
+                const filteredCommits = commits.filter((commit: any) => {
+                  const commitEmail = commit.commit.author?.email?.toLowerCase() || ''
+                  // If no emails specified, include all commits
+                  if (authorEmails.length === 0) return true
+                  // Check if commit email matches any of the specified emails
+                  return authorEmails.some(email => commitEmail === email.toLowerCase())
+                })
+                
+                filteredCommits.forEach((commit: any) => {
                   commitEvents.push({
                     type: 'PushEvent',
                     repo: {
@@ -316,6 +336,60 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
                     }
                   })
                 })
+                
+                // Also fetch commits by each email address (GitHub API supports author email search)
+                for (const email of authorEmails) {
+                  if (remaining < 3) break // Stop if rate limit is low
+                  
+                  try {
+                    const emailCommitsResponse = await fetch(
+                      `https://api.github.com/repos/${repo.full_name}/commits?author=${encodeURIComponent(email)}&since=${sinceISO}&per_page=100`,
+                      {
+                        headers: {
+                          'Accept': 'application/vnd.github.v3+json'
+                        }
+                      }
+                    )
+                    
+                    const emailRemaining = parseInt(emailCommitsResponse.headers.get('X-RateLimit-Remaining') || '0')
+                    if (emailRemaining < 3) {
+                      console.log('Rate limit approaching, stopping email-based commit fetches')
+                      break
+                    }
+                    
+                    if (emailCommitsResponse.ok) {
+                      const emailCommits = await emailCommitsResponse.json()
+                      console.log(`✅ Fetched ${emailCommits.length} commits from ${repo.full_name} (by email: ${email})`)
+                      
+                      // Add commits that aren't already in commitEvents (avoid duplicates)
+                      const existingShas = new Set(commitEvents.map((e: any) => e.payload.commits[0].sha))
+                      emailCommits.forEach((commit: any) => {
+                        if (!existingShas.has(commit.sha)) {
+                          commitEvents.push({
+                            type: 'PushEvent',
+                            repo: {
+                              name: repo.name,
+                              full_name: repo.full_name
+                            },
+                            created_at: commit.commit.author.date,
+                            payload: {
+                              commits: [{
+                                sha: commit.sha,
+                                message: commit.commit.message,
+                                author: commit.commit.author
+                              }]
+                            }
+                          })
+                        }
+                      })
+                    }
+                    
+                    // Small delay between email fetches
+                    await new Promise(resolve => setTimeout(resolve, 100))
+                  } catch (err) {
+                    console.log(`Could not fetch commits by email ${email} from ${repo.full_name}:`, err)
+                  }
+                }
               } else if (commitsResponse.status === 404) {
                 // Repo might not exist or be inaccessible, skip
                 continue
