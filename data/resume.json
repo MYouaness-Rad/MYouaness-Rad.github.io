@@ -238,6 +238,20 @@
     },
     {
       "id": 4,
+      "name": "StoryVerse",
+      "slug": "storyverse",
+      "description": "Interactive storytelling platform and content management system for creating, sharing, and managing narrative content with user engagement features.",
+      "technologies": ["React", "Next.js", "TypeScript", "Node.js", "MongoDB", "Tailwind CSS"],
+      "icon": "BookOpen",
+      "color": "from-pink-400 to-rose-500",
+      "status": "Active",
+      "year": "2023-2024",
+      "featured": true,
+      "isPrivateRepo": true,
+      "githubUrl": "https://github.com/MYouaness-Rad/storyverse"
+    },
+    {
+      "id": 5,
       "name": "Rogers Motors",
       "slug": "rogers-motors",
       "description": "Automotive dealership management system with inventory tracking, customer management, and sales reporting.",
@@ -251,7 +265,7 @@
       "githubUrl": "https://github.com/MYouaness-Rad/rogers-motors"
     },
     {
-      "id": 5,
+      "id": 6,
       "name": "Job Tracker Pro",
       "slug": "job-tracker-pro",
       "description": "Professional job application tracking system with resume management, interview scheduling, and analytics dashboard.",
@@ -265,7 +279,7 @@
       "githubUrl": "https://github.com/MYouaness-Rad/job-tracker-pro"
     },
     {
-      "id": 6,
+      "id": 7,
       "name": "Medical Rep Management System",
       "slug": "medical-rep",
       "description": "Healthcare industry solution helping pharmaceutical companies manage sales teams and medical representatives with real-time tracking and reporting.",
