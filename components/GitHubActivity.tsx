@@ -888,11 +888,57 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
 
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Contributions Heatmap */}
-            {stats && <ContributionsHeatmap contributions={filteredContributions} />}
+            {/* Tab Navigation */}
+            <div className="flex flex-col sm:flex-row gap-1 sm:space-x-1 bg-[var(--vscode-sidebar)] rounded-lg p-1 border border-[var(--vscode-border)]">
+              <button
+                onClick={() => setActiveTab('activity')}
+                className={`w-full sm:flex-1 py-2 px-3 md:px-4 rounded-md text-sm font-medium transition-all ${
+                  activeTab === 'activity'
+                    ? 'bg-[var(--vscode-blue)] text-white shadow-sm'
+                    : 'text-[var(--vscode-text-muted)] hover:text-[var(--vscode-text)]'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>Activity</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('repos')}
+                className={`w-full sm:flex-1 py-2 px-3 md:px-4 rounded-md text-sm font-medium transition-all ${
+                  activeTab === 'repos'
+                    ? 'bg-[var(--vscode-blue)] text-white shadow-sm'
+                    : 'text-[var(--vscode-text-muted)] hover:text-[var(--vscode-text)]'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <Code className="w-4 h-4" />
+                  <span>Repositories</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('languages')}
+                className={`w-full sm:flex-1 py-2 px-3 md:px-4 rounded-md text-sm font-medium transition-all ${
+                  activeTab === 'languages'
+                    ? 'bg-[var(--vscode-blue)] text-white shadow-sm'
+                    : 'text-[var(--vscode-text-muted)] hover:text-[var(--vscode-text)]'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <Activity className="w-4 h-4" />
+                  <span>Languages</span>
+                </div>
+              </button>
+            </div>
 
-            {/* Activity Overview */}
-            {stats && (
+            {/* Tab Content */}
+            {activeTab === 'activity' && (
+              <div className="space-y-6">
+                {/* Contributions Heatmap */}
+                {stats && <ContributionsHeatmap contributions={filteredContributions} />}
+
+                {/* Activity Overview */}
+                {stats && (
               <div className="bg-[var(--vscode-sidebar)] border border-[var(--vscode-border)] rounded-xl p-6">
                 <h2 className="text-xl font-bold text-[var(--vscode-text)] mb-4">Contributed to ({selectedYear})</h2>
                 <div className="space-y-2 mb-6">
@@ -1147,51 +1193,9 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
                 })}
               </div>
             )}
+              </div>
+            )}
 
-            {/* Tab Navigation */}
-            <div className="flex flex-col sm:flex-row gap-1 sm:space-x-1 bg-[var(--vscode-sidebar)] rounded-lg p-1 border border-[var(--vscode-border)]">
-              <button
-                onClick={() => setActiveTab('activity')}
-                className={`w-full sm:flex-1 py-2 px-3 md:px-4 rounded-md text-sm font-medium transition-all ${
-                  activeTab === 'activity'
-                    ? 'bg-[var(--vscode-blue)] text-white shadow-sm'
-                    : 'text-[var(--vscode-text-muted)] hover:text-[var(--vscode-text)]'
-                }`}
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>Activity</span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('repos')}
-                className={`w-full sm:flex-1 py-2 px-3 md:px-4 rounded-md text-sm font-medium transition-all ${
-                  activeTab === 'repos'
-                    ? 'bg-[var(--vscode-blue)] text-white shadow-sm'
-                    : 'text-[var(--vscode-text-muted)] hover:text-[var(--vscode-text)]'
-                }`}
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <Code className="w-4 h-4" />
-                  <span>Repositories</span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('languages')}
-                className={`w-full sm:flex-1 py-2 px-3 md:px-4 rounded-md text-sm font-medium transition-all ${
-                  activeTab === 'languages'
-                    ? 'bg-[var(--vscode-blue)] text-white shadow-sm'
-                    : 'text-[var(--vscode-text-muted)] hover:text-[var(--vscode-text)]'
-                }`}
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <Activity className="w-4 h-4" />
-                  <span>Languages</span>
-                </div>
-              </button>
-            </div>
-
-            {/* Tab Content */}
             {activeTab === 'repos' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
