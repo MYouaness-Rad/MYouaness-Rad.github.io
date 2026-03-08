@@ -561,40 +561,74 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
     return colors[level]
   }
 
-  // Group contributions by week for heatmap display
+  // Group contributions by week for horizontal heatmap display (like GitHub)
   const groupContributionsByWeek = (contributions: Contribution[]) => {
-    if (contributions.length === 0) return []
+    if (contributions.length === 0) return { weeks: [], monthLabels: [] }
     
-    // Sort contributions by date
-    const sorted = [...contributions].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    )
+    // Create a map of all contributions by date
+    const contributionsMap = new Map<string, Contribution>()
+    contributions.forEach(cont => {
+      contributionsMap.set(cont.date, cont)
+    })
     
-    const weeks: Contribution[][] = []
-    let currentWeek: Contribution[] = []
-    let lastDate: Date | null = null
+    // Find the date range
+    const dates = contributions.map(c => new Date(c.date))
+    const earliestDate = new Date(Math.min(...dates.map(d => d.getTime())))
+    const latestDate = new Date(Math.max(...dates.map(d => d.getTime())))
     
-    sorted.forEach((cont) => {
-      const date = new Date(cont.date)
+    // Start from the Sunday of the week containing the earliest date
+    const startDate = new Date(earliestDate)
+    const dayOfWeek = startDate.getDay()
+    startDate.setDate(startDate.getDate() - dayOfWeek)
+    startDate.setHours(0, 0, 0, 0)
+    
+    // End at today or latest contribution date
+    const endDate = new Date(latestDate > new Date() ? new Date() : latestDate)
+    endDate.setHours(23, 59, 59, 999)
+    
+    // Generate all days in the range, grouped by week
+    const weeks: (Contribution | null)[][] = []
+    let currentWeek: (Contribution | null)[] = []
+    let currentDate = new Date(startDate)
+    const monthLabels: { month: string; weekIndex: number }[] = []
+    let lastMonth = -1
+    
+    while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().split('T')[0]
+      const dayOfWeek = currentDate.getDay()
       
-      // If this is the first contribution or there's a gap of more than 7 days, start a new week
-      if (lastDate === null || (date.getTime() - lastDate.getTime()) > 7 * 24 * 60 * 60 * 1000) {
-        if (currentWeek.length > 0) {
-          weeks.push(currentWeek)
-        }
+      // Start new week on Sunday
+      if (dayOfWeek === 0 && currentWeek.length > 0) {
+        weeks.push(currentWeek)
         currentWeek = []
       }
       
-      currentWeek.push(cont)
-      lastDate = date
-    })
+      // Add contribution for this day (or null if no contribution)
+      const contribution = contributionsMap.get(dateStr) || null
+      currentWeek.push(contribution)
+      
+      // Track month labels (show at start of each month, approximately)
+      const month = currentDate.getMonth()
+      if (month !== lastMonth && dayOfWeek <= 2) {
+        const monthName = currentDate.toLocaleDateString('en-US', { month: 'short' })
+        monthLabels.push({ month: monthName, weekIndex: weeks.length })
+        lastMonth = month
+      }
+      
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
     
-    // Push the last week
+    // Add the last week if it has days
     if (currentWeek.length > 0) {
+      // Pad the last week to 7 days if needed
+      while (currentWeek.length < 7) {
+        currentWeek.push(null)
+      }
       weeks.push(currentWeek)
     }
     
-    return weeks
+    return { weeks, monthLabels }
   }
 
   // Get activity percentage for quadrant chart
@@ -754,26 +788,68 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
                 {stats.contributions.length > 0 ? (
                   <>
                     <div className="overflow-x-auto">
-                      <div className="flex gap-1 min-w-max pb-4">
-                        {groupContributionsByWeek(stats.contributions).map((week, weekIndex) => (
-                          <div key={weekIndex} className="flex flex-col gap-1">
-                            {week.map((cont, dayIndex) => {
-                              const date = new Date(cont.date)
-                              const isToday = date.toDateString() === new Date().toDateString()
-                              return (
-                                <div
-                                  key={`${cont.date}-${dayIndex}`}
-                                  className="w-3 h-3 rounded-sm"
-                                  style={{
-                                    backgroundColor: getContributionColor(cont.level),
-                                    border: isToday ? '1px solid var(--vscode-blue)' : 'none'
-                                  }}
-                                  title={`${cont.count} contribution${cont.count !== 1 ? 's' : ''} on ${date.toLocaleDateString()}`}
-                                />
-                              )
-                            })}
+                      <div className="flex items-start gap-1">
+                        {/* Day labels on the left */}
+                        <div className="flex flex-col gap-1 pr-2 pt-6">
+                          {['Mon', '', 'Wed', '', 'Fri', '', ''].map((day, index) => (
+                            <div
+                              key={index}
+                              className="w-3 h-3 flex items-center justify-end text-[10px] text-[var(--vscode-text-muted)]"
+                              style={{ visibility: day ? 'visible' : 'hidden' }}
+                            >
+                              {day}
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Month labels and weeks */}
+                        <div className="flex-1 min-w-0">
+                          {/* Month labels */}
+                          <div className="flex gap-1 mb-1 h-4 relative" style={{ width: `${groupContributionsByWeek(stats.contributions).weeks.length * 13}px` }}>
+                            {groupContributionsByWeek(stats.contributions).monthLabels.map(({ month, weekIndex }) => (
+                              <div
+                                key={`${month}-${weekIndex}`}
+                                className="text-[10px] text-[var(--vscode-text-muted)] absolute whitespace-nowrap"
+                                style={{ left: `${weekIndex * 13}px` }}
+                              >
+                                {month}
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                          
+                          {/* Contribution grid */}
+                          <div className="flex gap-1">
+                            {groupContributionsByWeek(stats.contributions).weeks.map((week, weekIndex) => (
+                              <div key={weekIndex} className="flex flex-col gap-1">
+                                {week.map((cont, dayIndex) => {
+                                  if (cont === null) {
+                                    return (
+                                      <div
+                                        key={`empty-${weekIndex}-${dayIndex}`}
+                                        className="w-3 h-3 rounded-sm"
+                                        style={{ backgroundColor: getContributionColor(0) }}
+                                      />
+                                    )
+                                  }
+                                  
+                                  const date = new Date(cont.date)
+                                  const isToday = date.toDateString() === new Date().toDateString()
+                                  return (
+                                    <div
+                                      key={`${cont.date}-${dayIndex}`}
+                                      className="w-3 h-3 rounded-sm cursor-pointer hover:ring-2 hover:ring-[var(--vscode-blue)] transition-all"
+                                      style={{
+                                        backgroundColor: getContributionColor(cont.level),
+                                        border: isToday ? '1px solid var(--vscode-blue)' : 'none'
+                                      }}
+                                      title={`${cont.count} contribution${cont.count !== 1 ? 's' : ''} on ${date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`}
+                                    />
+                                  )
+                                })}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                     
