@@ -822,15 +822,16 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
                       console.warn('Invalid repoFullName:', repoFullName);
                       return null;
                     }
-                    // Check if this is a private repo (backend sends "[Private]" in the name)
+                    // Get the display name from the first event with this repoFullName
+                    const firstEvent = filteredActivityEvents.find(e => e.repoFullName === repoFullName)
+                    const displayRepoName = firstEvent?.repo || 'Unknown'
+                    // Check if this is a private repo (backend sends "[Private]" in the full_name)
                     const isPrivate = repoFullName.includes('[Private]')
-                    const [owner, repoName] = repoFullName.split('/')
-                    // For private repos, backend sends organization name or "Private Repo"
-                    const displayName = isPrivate ? (repoName === '[Private]' ? 'Private Repo' : repoName) : (repoName || 'Unknown')
+                    const [owner] = repoFullName.split('/')
                     return (
                       <div key={`${repoFullName}-${index}`} className="flex items-center gap-2 text-sm text-[var(--vscode-text)]">
                         <Code className="w-4 h-4" />
-                        <span className="font-mono">{isPrivate ? displayName : `${owner}/${displayName}`}</span>
+                        <span className="font-mono">{isPrivate ? displayRepoName : `${owner}/${displayRepoName}`}</span>
                         {isPrivate && <span className="text-xs text-[var(--vscode-text-muted)]">🔒</span>}
                       </div>
                     )
@@ -902,17 +903,18 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
                                 console.warn('Invalid repoFullName in commitsByRepo:', repoFullName);
                                 return null;
                               }
-                              // Check if this is a private repo (backend sends "[Private]" in the name)
+                              // Get the display name from the first commit event with this repoFullName
+                              const firstCommit = repoCommits[0]
+                              const displayRepoName = firstCommit?.repo || 'Unknown'
+                              // Check if this is a private repo (backend sends "[Private]" in the full_name)
                               const isPrivate = repoFullName.includes('[Private]')
-                              const [owner, repoName] = repoFullName.split('/')
-                              // For private repos, backend sends organization name or "Private Repo"
-                              const displayName = isPrivate ? (repoName === '[Private]' ? 'Private Repo' : repoName) : (repoName || 'Unknown')
+                              const [owner] = repoFullName.split('/')
                               const commitCount = repoCommits.reduce((sum, e) => sum + (e.count || 1), 0)
                               const maxCommits = Math.max(...Object.values(commitsByRepo).map(rc => rc.reduce((sum, e) => sum + (e.count || 1), 0)))
                               return (
                                 <div key={repoFullName} className="flex items-center gap-3">
                                   <span className="text-sm font-mono text-[var(--vscode-text)] min-w-[200px]">
-                                    {isPrivate ? displayName : `${owner}/${displayName}`}
+                                    {isPrivate ? displayRepoName : `${owner}/${displayRepoName}`}
                                     {isPrivate && <span className="ml-2 text-xs">🔒</span>}
                                   </span>
                                   <div className="flex-1 bg-[var(--vscode-border)] rounded-full h-2">
@@ -953,15 +955,16 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
                                 console.warn('Invalid repoFullName in pullRequests:', repoFullName);
                                 return null;
                               }
-                              // Check if this is a private repo (backend sends "[Private]" in the name)
+                              // Get the display name from the first PR event with this repoFullName
+                              const firstPR = pullRequests.find(pr => pr.repoFullName === repoFullName)
+                              const displayRepoName = firstPR?.repo || 'Unknown'
+                              // Check if this is a private repo (backend sends "[Private]" in the full_name)
                               const isPrivate = repoFullName.includes('[Private]')
-                              const [owner, repoName] = repoFullName.split('/')
-                              // For private repos, backend sends organization name or "Private Repo"
-                              const displayName = isPrivate ? (repoName === '[Private]' ? 'Private Repo' : repoName) : (repoName || 'Unknown')
+                              const [owner] = repoFullName.split('/')
                               return (
                                 <div key={repoFullName} className="flex items-center gap-3">
                                   <span className="text-sm font-mono text-[var(--vscode-text)] min-w-[200px]">
-                                    {isPrivate ? displayName : `${owner}/${displayName}`}
+                                    {isPrivate ? displayRepoName : `${owner}/${displayRepoName}`}
                                     {isPrivate && <span className="ml-2 text-xs">🔒</span>}
                                   </span>
                                   <div className="flex gap-2">
@@ -1008,15 +1011,16 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
                                 console.warn('Invalid repoFullName in reviews:', repoFullName);
                                 return null;
                               }
-                              // Check if this is a private repo (backend sends "[Private]" in the name)
+                              // Get the display name from the first review event with this repoFullName
+                              const firstReview = repoReviews[0]
+                              const displayRepoName = firstReview?.repo || 'Unknown'
+                              // Check if this is a private repo (backend sends "[Private]" in the full_name)
                               const isPrivate = repoFullName.includes('[Private]')
-                              const [owner, repoName] = repoFullName.split('/')
-                              // For private repos, backend sends organization name or "Private Repo"
-                              const displayName = isPrivate ? (repoName === '[Private]' ? 'Private Repo' : repoName) : (repoName || 'Unknown')
+                              const [owner] = repoFullName.split('/')
                               return (
                                 <div key={repoFullName} className="flex items-center gap-3">
                                   <span className="text-sm font-mono text-[var(--vscode-text)] min-w-[200px]">
-                                    {isPrivate ? displayName : `${owner}/${displayName}`}
+                                    {isPrivate ? displayRepoName : `${owner}/${displayRepoName}`}
                                     {isPrivate && <span className="ml-2 text-xs">🔒</span>}
                                   </span>
                                   <span className="text-sm text-[var(--vscode-text-muted)]">
