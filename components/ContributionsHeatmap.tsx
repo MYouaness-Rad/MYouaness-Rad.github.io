@@ -151,9 +151,9 @@ const ContributionsHeatmap: React.FC<ContributionsHeatmapProps> = ({ contributio
           </div>
           
           {/* Month labels and weeks */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1">
             {/* Month labels */}
-            <div className="flex gap-1 mb-1 h-4 relative" style={{ width: `${weeks.length * 13}px` }}>
+            <div className="flex gap-1 mb-1 h-4 relative" style={{ width: `${weeks.length * 13}px`, minWidth: `${weeks.length * 13}px` }}>
               {monthLabels.map(({ month, weekIndex }) => (
                 <div
                   key={`${month}-${weekIndex}`}
@@ -166,7 +166,7 @@ const ContributionsHeatmap: React.FC<ContributionsHeatmapProps> = ({ contributio
             </div>
             
             {/* Contribution grid */}
-            <div className="flex gap-1">
+            <div className="flex gap-1" style={{ width: `${weeks.length * 13}px`, minWidth: `${weeks.length * 13}px` }}>
               {weeks.map((week, weekIndex) => (
                 <div key={weekIndex} className="flex flex-col gap-1">
                   {week.map((cont, dayIndex) => {
