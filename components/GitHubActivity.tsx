@@ -143,8 +143,9 @@ const maskPrivateRepoName = (repoName: string, isPrivate: boolean): string => {
   return "Private Repo"
 }
 
-// Helper function to generate contribution heatmap data from real events only
-const generateContributions = (events: ActivityEvent[]): Contribution[] => {
+// Helper function to generate contribution heatmap data from real events
+// Generates a full year of contributions (365/366 days) to ensure proper heatmap display
+const generateContributions = (events: ActivityEvent[], year?: number): Contribution[] => {
   const contributionsMap = new Map<string, number>()
   
   // Group events by date - only use real data
@@ -156,33 +157,59 @@ const generateContributions = (events: ActivityEvent[]): Contribution[] => {
     contributionsMap.set(date, currentCount + increment)
   })
   
-  // Only generate contributions for dates where we have real data
-  // Sort dates and create contribution entries
-  const contributions: Contribution[] = []
-  const sortedDates = Array.from(contributionsMap.keys()).sort()
+  // Determine the year range
+  let startDate: Date
+  let endDate: Date
   
-    sortedDates.forEach(dateStr => {
-      const count = contributionsMap.get(dateStr) || 0
-      if (count > 0) {
-        // Calculate contribution level
-        let level: 0 | 1 | 2 | 3 | 4 = 0
-        if (count > 0) {
-          if (count <= 3) level = 1
-          else if (count <= 7) level = 2
-          else if (count <= 12) level = 3
-          else level = 4
-        }
-        
-        contributions.push({
-          date: dateStr,
-          count,
-          level
-        })
-      }
+  if (year) {
+    // Generate full year if year is specified
+    startDate = new Date(year, 0, 1) // January 1st
+    endDate = new Date(year, 11, 31) // December 31st
+  } else if (events.length > 0) {
+    // Use the date range from events
+    const dates = events.map(e => new Date(e.date.split('T')[0])).sort((a, b) => a.getTime() - b.getTime())
+    startDate = dates[0]
+    endDate = dates[dates.length - 1]
+    // Extend to full year if we have data
+    const eventYear = startDate.getFullYear()
+    startDate = new Date(eventYear, 0, 1)
+    endDate = new Date(eventYear, 11, 31)
+  } else {
+    // Default to current year
+    const now = new Date()
+    startDate = new Date(now.getFullYear(), 0, 1)
+    endDate = new Date(now.getFullYear(), 11, 31)
+  }
+  
+  // Generate contributions for all days in the year range
+  const contributions: Contribution[] = []
+  const currentDate = new Date(startDate)
+  
+  while (currentDate <= endDate) {
+    const dateStr = currentDate.toISOString().split('T')[0]
+    const count = contributionsMap.get(dateStr) || 0
+    
+    // Calculate contribution level
+    let level: 0 | 1 | 2 | 3 | 4 = 0
+    if (count > 0) {
+      if (count <= 3) level = 1
+      else if (count <= 7) level = 2
+      else if (count <= 12) level = 3
+      else level = 4
+    }
+    
+    contributions.push({
+      date: dateStr,
+      count,
+      level
     })
     
-    return contributions
+    // Move to next day
+    currentDate.setDate(currentDate.getDate() + 1)
   }
+  
+  return contributions
+}
 
 interface GitHubActivityProps {
   username: string
@@ -647,29 +674,81 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
   }
 
-  // Filter contributions by selected year (must be called before early returns)
+  // Filter contributions by selected year and generate full year (365/366 days) for proper heatmap display
   const filteredContributions = useMemo(() => {
     if (!stats) return []
-    const filtered = stats.contributions.filter(cont => {
+    
+    // Filter contributions for the selected year
+    const yearContributions = stats.contributions.filter(cont => {
       const year = new Date(cont.date).getFullYear()
       return year === selectedYear
     })
+    
+    // Create a map of contributions by date for quick lookup
+    const contributionsMap = new Map<string, number>()
+    yearContributions.forEach(cont => {
+      contributionsMap.set(cont.date, cont.count)
+    })
+    
+    // Generate full year of contributions (365 or 366 days)
+    const fullYearContributions: Contribution[] = []
+    const startDate = new Date(selectedYear, 0, 1) // January 1st
+    const endDate = new Date(selectedYear, 11, 31) // December 31st
+    const currentDate = new Date(startDate)
+    
+    while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().split('T')[0]
+      const count = contributionsMap.get(dateStr) || 0
+      
+      // Calculate contribution level
+      let level: 0 | 1 | 2 | 3 | 4 = 0
+      if (count > 0) {
+        if (count <= 3) level = 1
+        else if (count <= 7) level = 2
+        else if (count <= 12) level = 3
+        else level = 4
+      }
+      
+      fullYearContributions.push({
+        date: dateStr,
+        count,
+        level
+      })
+      
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
+    
     console.log(`📅 Filtered contributions for ${selectedYear}:`, {
       totalContributions: stats.contributions.length,
-      filteredCount: filtered.length,
+      filteredCount: yearContributions.length,
+      fullYearDays: fullYearContributions.length,
       availableYears: [...new Set(stats.contributions.map(c => new Date(c.date).getFullYear()))].sort(),
       selectedYear
     })
-    return filtered
+    
+    return fullYearContributions
   }, [stats, selectedYear])
 
   // Filter activity events by selected year
   const filteredActivityEvents = useMemo(() => {
     if (!stats) return []
-    return stats.recentActivity.filter(event => {
+    const filtered = stats.recentActivity.filter(event => {
       const year = new Date(event.date).getFullYear()
       return year === selectedYear
     })
+    
+    // Debug: Check for private repos in filtered events
+    const privateReposInFiltered = [...new Set(filtered
+      .filter(e => e.repoFullName?.includes('[Private]'))
+      .map(e => e.repoFullName)
+    )]
+    
+    if (privateReposInFiltered.length > 0) {
+      console.log(`🔒 Private repos in filtered events (${selectedYear}):`, privateReposInFiltered)
+    }
+    
+    return filtered
   }, [stats, selectedYear])
 
   // Recalculate percentages based on filtered data
@@ -817,30 +896,61 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
               <div className="bg-[var(--vscode-sidebar)] border border-[var(--vscode-border)] rounded-xl p-6">
                 <h2 className="text-xl font-bold text-[var(--vscode-text)] mb-4">Contributed to ({selectedYear})</h2>
                 <div className="space-y-2 mb-6">
-                  {Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName).filter(Boolean))).slice(0, 3).map((repoFullName, index) => {
-                    if (!repoFullName || !repoFullName.includes('/')) {
-                      console.warn('Invalid repoFullName:', repoFullName);
-                      return null;
+                  {(() => {
+                    // Get all unique repos from filtered events for the selected year
+                    const uniqueRepos = Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName).filter(Boolean)))
+                    
+                    // Also include repos from stats.contributedRepos that have events in this year
+                    const allReposForYear = new Set(uniqueRepos)
+                    if (stats?.contributedRepos) {
+                      stats.contributedRepos.forEach(repoFullName => {
+                        // Check if this repo has any events in the selected year
+                        const hasEventsInYear = filteredActivityEvents.some(e => e.repoFullName === repoFullName)
+                        if (hasEventsInYear) {
+                          allReposForYear.add(repoFullName)
+                        }
+                      })
                     }
-                    // Get the display name from the first event with this repoFullName
-                    const firstEvent = filteredActivityEvents.find(e => e.repoFullName === repoFullName)
-                    const displayRepoName = firstEvent?.repo || 'Unknown'
-                    // Check if this is a private repo (backend sends "[Private]" in the full_name)
-                    const isPrivate = repoFullName.includes('[Private]')
-                    const [owner] = repoFullName.split('/')
+                    
+                    const reposToShow = Array.from(allReposForYear).slice(0, 10) // Show up to 10 repos
+                    
                     return (
-                      <div key={`${repoFullName}-${index}`} className="flex items-center gap-2 text-sm text-[var(--vscode-text)]">
-                        <Code className="w-4 h-4" />
-                        <span className="font-mono">{isPrivate ? displayRepoName : `${owner}/${displayRepoName}`}</span>
-                        {isPrivate && <span className="text-xs text-[var(--vscode-text-muted)]">🔒</span>}
-                      </div>
+                      <>
+                        {reposToShow.map((repoFullName, index) => {
+                          if (!repoFullName || !repoFullName.includes('/')) {
+                            console.warn('Invalid repoFullName:', repoFullName);
+                            return null;
+                          }
+                          // Get the display name from the first event with this repoFullName, or from stats
+                          const firstEvent = filteredActivityEvents.find(e => e.repoFullName === repoFullName)
+                          let displayRepoName = firstEvent?.repo || 'Unknown'
+                          
+                          // If we don't have the display name from events, try to get it from the repo name
+                          if (displayRepoName === 'Unknown' && repoFullName.includes('/')) {
+                            const [, repoName] = repoFullName.split('/')
+                            displayRepoName = repoName === '[Private]' ? 'Private Repo' : repoName
+                          }
+                          
+                          // Check if this is a private repo (backend sends "[Private]" in the full_name)
+                          const isPrivate = repoFullName.includes('[Private]')
+                          const [owner] = repoFullName.split('/')
+                          
+                          return (
+                            <div key={`${repoFullName}-${index}`} className="flex items-center gap-2 text-sm text-[var(--vscode-text)]">
+                              <Code className="w-4 h-4" />
+                              <span className="font-mono">{isPrivate ? displayRepoName : `${owner}/${displayRepoName}`}</span>
+                              {isPrivate && <span className="text-xs text-[var(--vscode-text-muted)]">🔒</span>}
+                            </div>
+                          )
+                        }).filter(Boolean)}
+                        {allReposForYear.size > reposToShow.length && (
+                          <p className="text-sm text-[var(--vscode-text-muted)]">
+                            and {allReposForYear.size - reposToShow.length} other repositories
+                          </p>
+                        )}
+                      </>
                     )
-                  }).filter(Boolean)}
-                  {Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName))).length > 3 && (
-                    <p className="text-sm text-[var(--vscode-text-muted)]">
-                      and {Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName))).length - 3} other repositories
-                    </p>
-                  )}
+                  })()}
                 </div>
 
                 {/* Code Review Quadrant Chart */}
