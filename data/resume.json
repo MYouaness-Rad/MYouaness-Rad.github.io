@@ -204,7 +204,9 @@
       "color": "from-blue-400 to-cyan-500",
       "status": "Production",
       "year": "2023-2025",
-      "featured": true
+      "featured": true,
+      "isPrivateRepo": true,
+      "githubUrl": "https://github.com/MYouaness-Rad/turris-erp"
     },
     {
       "id": 2,
@@ -216,7 +218,9 @@
       "color": "from-green-400 to-emerald-500",
       "status": "Live",
       "year": "2018-2022",
-      "featured": true
+      "featured": true,
+      "isPrivateRepo": true,
+      "githubUrl": "https://github.com/MYouaness-Rad/entityconnect"
     },
     {
       "id": 3,
@@ -228,7 +232,9 @@
       "color": "from-purple-400 to-violet-500",
       "status": "Active",
       "year": "2018-2021",
-      "featured": true
+      "featured": true,
+      "isPrivateRepo": true,
+      "githubUrl": "https://github.com/MYouaness-Rad/abgadya"
     },
     {
       "id": 4,
@@ -240,7 +246,9 @@
       "color": "from-indigo-400 to-blue-500",
       "status": "Live",
       "year": "2023-2025",
-      "featured": false
+      "featured": false,
+      "isPrivateRepo": true,
+      "githubUrl": "https://github.com/MYouaness-Rad/rogers-motors"
     },
     {
       "id": 5,
@@ -252,7 +260,9 @@
       "color": "from-orange-400 to-red-500",
       "status": "Active",
       "year": "2024-2025",
-      "featured": false
+      "featured": false,
+      "isPrivateRepo": true,
+      "githubUrl": "https://github.com/MYouaness-Rad/job-tracker-pro"
     },
     {
       "id": 6,
@@ -264,7 +274,9 @@
       "color": "from-red-400 to-pink-500",
       "status": "Deployed",
       "year": "2016-2018",
-      "featured": false
+      "featured": false,
+      "isPrivateRepo": true,
+      "githubUrl": "https://github.com/MYouaness-Rad/medical-rep"
     }
   ],
   "skills": {
