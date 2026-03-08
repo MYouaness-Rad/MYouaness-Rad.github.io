@@ -64,28 +64,44 @@ const groupContributionsByWeek = (contributions: Contribution[]) => {
   let currentDate = new Date(startDate)
   const monthLabels: { month: string; weekIndex: number }[] = []
   let lastMonth = -1
+  let currentWeekIndex = 0
+  let lastLabelWeekIndex = -10 // Track last label position to avoid duplicates
   
   while (currentDate <= endDate) {
     const dateStr = currentDate.toISOString().split('T')[0]
     const dayOfWeek = currentDate.getDay()
     
-    // Start new week on Sunday
+    // Start new week on Sunday (but don't push if it's the very first day)
     if (dayOfWeek === 0 && currentWeek.length > 0) {
       weeks.push(currentWeek)
       currentWeek = []
+      currentWeekIndex++
+    }
+    
+    // Track month labels (show at the start of the week containing the first day of each month)
+    const month = currentDate.getMonth()
+    const dayOfMonth = currentDate.getDate()
+    if (month !== lastMonth && dayOfMonth === 1) {
+      const monthName = currentDate.toLocaleDateString('en-US', { month: 'short' })
+      // The week index for this month is the current week being built
+      // Month label should appear at the start of this week
+      const weekForMonth = currentWeekIndex
+      
+      // Only add label if it's different from the last one or if there's enough space
+      // Show label if it's a new month and either first label or at least 2 weeks from last
+      if (lastLabelWeekIndex === -10 || weekForMonth - lastLabelWeekIndex >= 2) {
+        monthLabels.push({ 
+          month: monthName, 
+          weekIndex: weekForMonth
+        })
+        lastLabelWeekIndex = weekForMonth
+      }
+      lastMonth = month
     }
     
     // Add contribution for this day (or null if no contribution)
     const contribution = contributionsMap.get(dateStr) || null
     currentWeek.push(contribution)
-    
-    // Track month labels (show at start of each month, approximately)
-    const month = currentDate.getMonth()
-    if (month !== lastMonth && dayOfWeek <= 2) {
-      const monthName = currentDate.toLocaleDateString('en-US', { month: 'short' })
-      monthLabels.push({ month: monthName, weekIndex: weeks.length })
-      lastMonth = month
-    }
     
     // Move to next day
     currentDate.setDate(currentDate.getDate() + 1)
@@ -153,20 +169,26 @@ const ContributionsHeatmap: React.FC<ContributionsHeatmapProps> = ({ contributio
           {/* Month labels and weeks */}
           <div className="flex-1">
             {/* Month labels */}
-            <div className="flex gap-1 mb-1 h-4 relative" style={{ width: `${weeks.length * 13}px`, minWidth: `${weeks.length * 13}px` }}>
-              {monthLabels.map(({ month, weekIndex }) => (
-                <div
-                  key={`${month}-${weekIndex}`}
-                  className="text-[10px] text-[var(--vscode-text-muted)] absolute whitespace-nowrap"
-                  style={{ left: `${weekIndex * 13}px` }}
-                >
-                  {month}
-                </div>
-              ))}
+            <div className="flex gap-1 mb-1 h-4 relative" style={{ width: `${weeks.length * 13 + (weeks.length - 1) * 4}px`, minWidth: `${weeks.length * 13 + (weeks.length - 1) * 4}px` }}>
+              {monthLabels.map(({ month, weekIndex }) => {
+                // Position at the start of the week
+                // Each week column is 13px wide, and gap-1 adds 4px between weeks
+                // So position = weekIndex * (13px + 4px gap)
+                const leftPosition = weekIndex * (13 + 4)
+                return (
+                  <div
+                    key={`${month}-${weekIndex}`}
+                    className="text-[10px] text-[var(--vscode-text-muted)] absolute whitespace-nowrap"
+                    style={{ left: `${leftPosition}px` }}
+                  >
+                    {month}
+                  </div>
+                )
+              })}
             </div>
             
             {/* Contribution grid */}
-            <div className="flex gap-1" style={{ width: `${weeks.length * 13}px`, minWidth: `${weeks.length * 13}px` }}>
+            <div className="flex gap-1" style={{ width: `${weeks.length * 13 + (weeks.length - 1) * 4}px`, minWidth: `${weeks.length * 13 + (weeks.length - 1) * 4}px` }}>
               {weeks.map((week, weekIndex) => (
                 <div key={weekIndex} className="flex flex-col gap-1">
                   {week.map((cont, dayIndex) => {
