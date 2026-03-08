@@ -238,17 +238,24 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
         if (config.API_BASE_URL) {
           try {
             // Build query params with username and emails
+            // Note: ENDPOINTS.GITHUB_ACTIVITY already includes ?type=github-activity, so we use & for additional params
             const params = new URLSearchParams({
               username: username,
               ...(authorEmails.length > 0 && { emails: authorEmails.join(',') })
             })
-            const backendResponse = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.GITHUB_ACTIVITY}?${params.toString()}`)
+            const backendResponse = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.GITHUB_ACTIVITY}&${params.toString()}`)
             if (backendResponse.ok) {
               const backendData = await backendResponse.json()
               reposData = backendData.repos || backendData.data?.repos || []
               eventsData = backendData.events || backendData.data?.events || []
               hasBackendAccess = true
               console.log(`✅ Fetched ${reposData.length} repos and ${eventsData.length} events from backend API`)
+              console.log('📅 Sample events:', eventsData.slice(0, 3).map((e: any) => ({
+                type: e.type,
+                date: e.created_at,
+                repo: e.repo?.full_name,
+                commits: e.payload?.commits?.length || 0
+              })))
             }
           } catch (err) {
             console.log('Backend API not available, falling back to public API:', err)
@@ -444,12 +451,19 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
         }
 
         eventsData.forEach((event: any) => {
+          // Use backend-provided private flag and display names if available
+          const isPrivate = event.repo?.private === true
           const repoName = event.repo?.name || 'unknown'
           const repoFullName = event.repo?.full_name || `${username}/${repoName}`
-          const isPrivate = reposData.find((r: any) => r.full_name === repoFullName)?.visibility === 'private'
-          const maskedRepoName = maskPrivateRepoName(repoName, isPrivate || false)
           
-          contributedReposSet.add(repoFullName)
+          // If backend didn't provide private flag, check reposData as fallback
+          const isPrivateFallback = isPrivate || reposData.find((r: any) => r.full_name === repoFullName || r.full_name === event.repo?.original_full_name)?.visibility === 'private'
+          
+          // Use display name from backend (already masked for private repos) or mask it here
+          const displayRepoName = isPrivateFallback && !isPrivate ? maskPrivateRepoName(repoName, true) : repoName
+          const displayFullName = repoFullName
+          
+          contributedReposSet.add(displayFullName)
 
           const eventDate = event.created_at || new Date().toISOString()
 
@@ -458,8 +472,8 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
               activityBreakdown.commits += event.payload?.commits?.length || 1
               activityEvents.push({
                 type: 'commit',
-                repo: maskedRepoName,
-                repoFullName,
+                repo: displayRepoName,
+                repoFullName: displayFullName,
                 date: eventDate,
                 count: event.payload?.commits?.length || 1
               })
@@ -468,8 +482,8 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
               activityBreakdown.pullRequests++
               activityEvents.push({
                 type: 'pull_request',
-                repo: maskedRepoName,
-                repoFullName,
+                repo: displayRepoName,
+                repoFullName: displayFullName,
                 date: eventDate,
                 title: event.payload?.pull_request?.title,
                 status: event.payload?.action === 'closed' && event.payload?.pull_request?.merged 
@@ -483,8 +497,8 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
               activityBreakdown.reviews++
               activityEvents.push({
                 type: 'pull_request_review',
-                repo: maskedRepoName,
-                repoFullName,
+                repo: displayRepoName,
+                repoFullName: displayFullName,
                 date: eventDate,
                 title: event.payload?.pull_request?.title
               })
@@ -493,8 +507,8 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
               activityBreakdown.issues++
               activityEvents.push({
                 type: 'issue',
-                repo: maskedRepoName,
-                repoFullName,
+                repo: displayRepoName,
+                repoFullName: displayFullName,
                 date: eventDate,
                 title: event.payload?.issue?.title,
                 status: event.payload?.issue?.state as 'open' | 'closed'
@@ -556,9 +570,13 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
           totalContributions: contributions.reduce((sum, c) => sum + c.count, 0),
           dateRange: contributions.length > 0 ? {
             earliest: contributions[0]?.date,
-            latest: contributions[contributions.length - 1]?.date
+            latest: contributions[contributions.length - 1]?.date,
+            earliestYear: new Date(contributions[0]?.date).getFullYear(),
+            latestYear: new Date(contributions[contributions.length - 1]?.date).getFullYear()
           } : 'No contributions found',
           reposFetched: topRepos?.length || 0,
+          sampleActivityEvents: activityEvents.slice(0, 3).map(e => ({ type: e.type, date: e.date, count: e.type === 'commit' ? e.count : 1 })),
+          sampleContributions: contributions.slice(0, 5),
           note: 'All data is fetched from GitHub API - no dummy data'
         })
 
@@ -624,10 +642,17 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
   // Filter contributions by selected year (must be called before early returns)
   const filteredContributions = useMemo(() => {
     if (!stats) return []
-    return stats.contributions.filter(cont => {
+    const filtered = stats.contributions.filter(cont => {
       const year = new Date(cont.date).getFullYear()
       return year === selectedYear
     })
+    console.log(`📅 Filtered contributions for ${selectedYear}:`, {
+      totalContributions: stats.contributions.length,
+      filteredCount: filtered.length,
+      availableYears: [...new Set(stats.contributions.map(c => new Date(c.date).getFullYear()))].sort(),
+      selectedYear
+    })
+    return filtered
   }, [stats, selectedYear])
 
   // Filter activity events by selected year
@@ -784,17 +809,24 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
               <div className="bg-[var(--vscode-sidebar)] border border-[var(--vscode-border)] rounded-xl p-6">
                 <h2 className="text-xl font-bold text-[var(--vscode-text)] mb-4">Contributed to ({selectedYear})</h2>
                 <div className="space-y-2 mb-6">
-                  {Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName))).slice(0, 3).map((repoFullName, index) => {
-                    const repo = repos.find(r => r.full_name === repoFullName)
-                    const isPrivate = repo?.visibility === 'private'
-                    const displayName = isPrivate ? 'Private Repo' : repoFullName.split('/')[1]
+                  {Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName).filter(Boolean))).slice(0, 3).map((repoFullName, index) => {
+                    if (!repoFullName || !repoFullName.includes('/')) {
+                      console.warn('Invalid repoFullName:', repoFullName);
+                      return null;
+                    }
+                    // Check if this is a private repo (backend sends "[Private]" in the name)
+                    const isPrivate = repoFullName.includes('[Private]')
+                    const [owner, repoName] = repoFullName.split('/')
+                    // For private repos, backend sends organization name or "Private Repo"
+                    const displayName = isPrivate ? (repoName === '[Private]' ? 'Private Repo' : repoName) : (repoName || 'Unknown')
                     return (
-                      <div key={index} className="flex items-center gap-2 text-sm text-[var(--vscode-text)]">
+                      <div key={`${repoFullName}-${index}`} className="flex items-center gap-2 text-sm text-[var(--vscode-text)]">
                         <Code className="w-4 h-4" />
-                        <span className="font-mono">{repoFullName.split('/')[0]}/{displayName}</span>
+                        <span className="font-mono">{isPrivate ? displayName : `${owner}/${displayName}`}</span>
+                        {isPrivate && <span className="text-xs text-[var(--vscode-text-muted)]">🔒</span>}
                       </div>
                     )
-                  })}
+                  }).filter(Boolean)}
                   {Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName))).length > 3 && (
                     <p className="text-sm text-[var(--vscode-text-muted)]">
                       and {Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName))).length - 3} other repositories
@@ -858,15 +890,22 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
                           </p>
                           <div className="space-y-2">
                             {Object.entries(commitsByRepo).slice(0, 5).map(([repoFullName, repoCommits]) => {
-                              const repo = repos.find(r => r.full_name === repoFullName)
-                              const isPrivate = repo?.visibility === 'private'
-                              const displayName = isPrivate ? 'Private Repo' : repoFullName.split('/')[1]
+                              if (!repoFullName || !repoFullName.includes('/')) {
+                                console.warn('Invalid repoFullName in commitsByRepo:', repoFullName);
+                                return null;
+                              }
+                              // Check if this is a private repo (backend sends "[Private]" in the name)
+                              const isPrivate = repoFullName.includes('[Private]')
+                              const [owner, repoName] = repoFullName.split('/')
+                              // For private repos, backend sends organization name or "Private Repo"
+                              const displayName = isPrivate ? (repoName === '[Private]' ? 'Private Repo' : repoName) : (repoName || 'Unknown')
                               const commitCount = repoCommits.reduce((sum, e) => sum + (e.count || 1), 0)
                               const maxCommits = Math.max(...Object.values(commitsByRepo).map(rc => rc.reduce((sum, e) => sum + (e.count || 1), 0)))
                               return (
                                 <div key={repoFullName} className="flex items-center gap-3">
                                   <span className="text-sm font-mono text-[var(--vscode-text)] min-w-[200px]">
-                                    {repoFullName.split('/')[0]}/{displayName}
+                                    {isPrivate ? displayName : `${owner}/${displayName}`}
+                                    {isPrivate && <span className="ml-2 text-xs">🔒</span>}
                                   </span>
                                   <div className="flex-1 bg-[var(--vscode-border)] rounded-full h-2">
                                     <div
@@ -902,13 +941,20 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
                                 return acc
                               }, {} as Record<string, { open: number; merged: number; closed: number }>)
                             ).slice(0, 5).map(([repoFullName, counts]) => {
-                              const repo = repos.find(r => r.full_name === repoFullName)
-                              const isPrivate = repo?.visibility === 'private'
-                              const displayName = isPrivate ? 'Private Repo' : repoFullName.split('/')[1]
+                              if (!repoFullName || !repoFullName.includes('/')) {
+                                console.warn('Invalid repoFullName in pullRequests:', repoFullName);
+                                return null;
+                              }
+                              // Check if this is a private repo (backend sends "[Private]" in the name)
+                              const isPrivate = repoFullName.includes('[Private]')
+                              const [owner, repoName] = repoFullName.split('/')
+                              // For private repos, backend sends organization name or "Private Repo"
+                              const displayName = isPrivate ? (repoName === '[Private]' ? 'Private Repo' : repoName) : (repoName || 'Unknown')
                               return (
                                 <div key={repoFullName} className="flex items-center gap-3">
                                   <span className="text-sm font-mono text-[var(--vscode-text)] min-w-[200px]">
-                                    {repoFullName.split('/')[0]}/{displayName}
+                                    {isPrivate ? displayName : `${owner}/${displayName}`}
+                                    {isPrivate && <span className="ml-2 text-xs">🔒</span>}
                                   </span>
                                   <div className="flex gap-2">
                                     {counts.merged > 0 && (
@@ -950,13 +996,20 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
                                 return acc
                               }, {} as Record<string, ActivityEvent[]>)
                             ).slice(0, 3).map(([repoFullName, repoReviews]) => {
-                              const repo = repos.find(r => r.full_name === repoFullName)
-                              const isPrivate = repo?.visibility === 'private'
-                              const displayName = isPrivate ? 'Private Repo' : repoFullName.split('/')[1]
+                              if (!repoFullName || !repoFullName.includes('/')) {
+                                console.warn('Invalid repoFullName in reviews:', repoFullName);
+                                return null;
+                              }
+                              // Check if this is a private repo (backend sends "[Private]" in the name)
+                              const isPrivate = repoFullName.includes('[Private]')
+                              const [owner, repoName] = repoFullName.split('/')
+                              // For private repos, backend sends organization name or "Private Repo"
+                              const displayName = isPrivate ? (repoName === '[Private]' ? 'Private Repo' : repoName) : (repoName || 'Unknown')
                               return (
                                 <div key={repoFullName} className="flex items-center gap-3">
                                   <span className="text-sm font-mono text-[var(--vscode-text)] min-w-[200px]">
-                                    {repoFullName.split('/')[0]}/{displayName}
+                                    {isPrivate ? displayName : `${owner}/${displayName}`}
+                                    {isPrivate && <span className="ml-2 text-xs">🔒</span>}
                                   </span>
                                   <span className="text-sm text-[var(--vscode-text-muted)]">
                                     {repoReviews.length} pull request{repoReviews.length !== 1 ? 's' : ''}
