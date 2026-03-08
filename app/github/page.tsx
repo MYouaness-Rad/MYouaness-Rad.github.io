@@ -4,7 +4,7 @@ import React from "react"
 import GitHubActivity from "@/components/GitHubActivity"
 
 export default function GitHubPage() {
-  const username = "minaragaie" // replace with the GitHub username you want to show
+  const username = "MYouaness-Rad" // replace with the GitHub username you want to show
 
   return (
     <div className="min-h-screen bg-[var(--vscode-editor-bg)] text-[var(--vscode-editor-foreground)]">

@@ -41,11 +41,11 @@ export const metadata: Metadata = {
     title: "Mina Youaness - Full-Stack Developer",
     description:
       "Resume of Mina Youaness, Full-Stack Web Developer with 10+ years of experience in Angular, React, Node.js, and scalable web applications.",
-    url: "https://minaragaie.github.io/",
+    url: "https://MYouaness-Rad.github.io/",
     siteName: "Mina Youaness Resume",
     images: [
       {
-        url: "https://minaragaie.github.io/images/profile.jpg",
+        url: "https://MYouaness-Rad.github.io/images/profile.jpg",
         width: 1200,
         height: 630,
         alt: "Mina Youaness Resume",
@@ -53,14 +53,6 @@ export const metadata: Metadata = {
     ],
     locale: "en_US",
     type: "website",
-  },
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "32x32" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
   },
   keywords: [
     "Mina Youaness",
@@ -70,15 +62,25 @@ export const metadata: Metadata = {
     "React",
     "Node.js",
     "TypeScript",
-    "Frontend Development",
-    "Backend Development",
+    "Web Development",
     "Resume",
     "Portfolio",
+    "Professional Resume",
     "Software Engineer",
     "Web Applications",
-  ],
-  authors: [{ name: "Mina Youaness", url: "https://minaragaie.github.io/" }],
+    "Frontend Development",
+    "Backend Development"],
+  authors: [{ name: "Mina Youaness", url: "https://MYouaness-Rad.github.io/" }],
   creator: "Mina Youaness",
+  viewport: "width=device-width, initial-scale=1",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 }
 
 // --------------------
