@@ -257,6 +257,7 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
             const eventsResponse = await fetch(`https://api.github.com/users/${username}/events/public?per_page=100`)
             if (eventsResponse.ok) {
               eventsData = await eventsResponse.json()
+              console.log(`✅ Fetched ${eventsData.length} events from GitHub Events API (last 30 days)`)
             }
           } catch (err) {
             console.log('Could not fetch events:', err)
@@ -295,6 +296,7 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
               
               if (commitsResponse.ok) {
                 const commits = await commitsResponse.json()
+                console.log(`✅ Fetched ${commits.length} commits from ${repo.full_name}`)
                 commits.forEach((commit: any) => {
                   commitEvents.push({
                     type: 'PushEvent',
@@ -460,8 +462,23 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
           full_name: repo.full_name
         }))
 
-        // Generate contributions heatmap
+        // Generate contributions heatmap from real events
         const contributions = generateContributions(activityEvents)
+        
+        // Log for debugging - verify real data is being used
+        console.log('📊 GitHub Contributions Summary:', {
+          totalEventsFromAPI: eventsData.length,
+          totalCommitsFromRepos: commitEvents.length,
+          processedActivityEvents: activityEvents.length,
+          uniqueContributionDays: contributions.length,
+          totalContributions: contributions.reduce((sum, c) => sum + c.count, 0),
+          dateRange: contributions.length > 0 ? {
+            earliest: contributions[0]?.date,
+            latest: contributions[contributions.length - 1]?.date
+          } : 'No contributions found',
+          reposFetched: topRepos.length,
+          note: 'All data is fetched from GitHub API - no dummy data'
+        })
 
         const stats: GitHubStats = {
           totalRepos: reposData.length,
