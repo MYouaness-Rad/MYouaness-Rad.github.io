@@ -55,7 +55,8 @@
         "Component Architecture",
         "MSAL Authentication",
         "Webpack"
-      ]
+      ],
+      "projects": []
     },
     {
       "id": 2,
@@ -98,7 +99,8 @@
         "WordPress",
         "Bootstrap",
         "Tailwind CSS"
-      ]
+      ],
+      "projects": ["turris-erp", "rogers-motors", "job-tracker-pro", "storyverse"]
     },
     {
       "id": 3,
@@ -117,7 +119,8 @@
         "Security",
         "Role-based Access Control",
         "Encryption"
-      ]
+      ],
+      "projects": ["turris-erp"]
     },
     {
       "id": 4,
@@ -144,7 +147,8 @@
         "Scrum",
         "Database Design",
         "Team Leadership"
-      ]
+      ],
+      "projects": ["entityconnect"]
     },
     {
       "id": 5,
@@ -165,7 +169,8 @@
         "Laravel",
         "WordPress",
         "PWA"
-      ]
+      ],
+      "projects": ["abgadya"]
     },
     {
       "id": 6,
@@ -190,7 +195,8 @@
         "PHP",
         "Healthcare Solutions",
         "Cross-platform Development"
-      ]
+      ],
+      "projects": ["medical-rep"]
     }
   ],
   "projects": [

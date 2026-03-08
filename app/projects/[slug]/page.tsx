@@ -13,6 +13,7 @@ export async function generateStaticParams() {
     { slug: 'storyverse' },
     { slug: 'rogers-motors' },
     { slug: 'job-tracker-pro' },
+    { slug: 'medical-rep' },
   ]
 }
 
