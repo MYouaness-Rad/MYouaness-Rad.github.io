@@ -157,31 +157,34 @@ const getContributionLevel = (count: number): 0 | 1 | 2 | 3 | 4 => {
   return 4
 }
 
-// Helper function to generate contribution heatmap data
+// Helper function to generate contribution heatmap data from real events only
 const generateContributions = (events: ActivityEvent[]): Contribution[] => {
   const contributionsMap = new Map<string, number>()
   
-  // Group events by date
+  // Group events by date - only use real data
   events.forEach(event => {
     const date = event.date.split('T')[0]
-    contributionsMap.set(date, (contributionsMap.get(date) || 0) + 1)
+    const currentCount = contributionsMap.get(date) || 0
+    // For commits, use the actual count, for other events count as 1
+    const increment = event.type === 'commit' ? (event.count || 1) : 1
+    contributionsMap.set(date, currentCount + increment)
   })
   
-  // Generate last 365 days
+  // Only generate contributions for dates where we have real data
+  // Sort dates and create contribution entries
   const contributions: Contribution[] = []
-  const today = new Date()
-  const oneYearAgo = new Date(today)
-  oneYearAgo.setFullYear(today.getFullYear() - 1)
+  const sortedDates = Array.from(contributionsMap.keys()).sort()
   
-  for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
-    const dateStr = d.toISOString().split('T')[0]
+  sortedDates.forEach(dateStr => {
     const count = contributionsMap.get(dateStr) || 0
-    contributions.push({
-      date: dateStr,
-      count,
-      level: getContributionLevel(count)
-    })
-  }
+    if (count > 0) {
+      contributions.push({
+        date: dateStr,
+        count,
+        level: getContributionLevel(count)
+      })
+    }
+  })
   
   return contributions
 }
@@ -285,6 +288,92 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
           } catch (err) {
             console.log('Could not fetch events:', err)
           }
+
+          // Fetch commits from repositories to get more historical data
+          // Limit to top 10 most recently updated repos to avoid rate limits
+          const topRepos = reposData
+            .filter((r: any) => r.visibility === 'public' && !r.fork)
+            .slice(0, 10)
+          
+          // Fetch commits with rate limiting (sequential with delay)
+          const commitEvents: any[] = []
+          for (const repo of topRepos) {
+            try {
+              // Fetch commits from the last year, authored by the user
+              const since = new Date()
+              since.setFullYear(since.getFullYear() - 1)
+              const sinceISO = since.toISOString()
+              
+              const commitsResponse = await fetch(
+                `https://api.github.com/repos/${repo.full_name}/commits?author=${username}&since=${sinceISO}&per_page=100`,
+                {
+                  headers: {
+                    'Accept': 'application/vnd.github.v3+json'
+                  }
+                }
+              )
+              
+              // Check rate limit
+              const remaining = parseInt(commitsResponse.headers.get('X-RateLimit-Remaining') || '0')
+              if (remaining < 5) {
+                console.log('Rate limit approaching, stopping commit fetches')
+                break
+              }
+              
+              if (commitsResponse.ok) {
+                const commits = await commitsResponse.json()
+                commits.forEach((commit: any) => {
+                  commitEvents.push({
+                    type: 'PushEvent',
+                    repo: {
+                      name: repo.name,
+                      full_name: repo.full_name
+                    },
+                    created_at: commit.commit.author.date,
+                    payload: {
+                      commits: [{
+                        sha: commit.sha,
+                        message: commit.commit.message,
+                        author: commit.commit.author
+                      }]
+                    }
+                  })
+                })
+              } else if (commitsResponse.status === 404) {
+                // Repo might not exist or be inaccessible, skip
+                continue
+              }
+              
+              // Small delay to avoid hitting rate limits
+              await new Promise(resolve => setTimeout(resolve, 100))
+            } catch (err) {
+              console.log(`Could not fetch commits from ${repo.full_name}:`, err)
+              // Continue with next repo
+            }
+          }
+          
+          // Merge commit events with other events
+          // Create a set of existing event dates+repos to avoid duplicates
+          const existingEventKeys = new Set(eventsData.map((e: any) => {
+            const date = e.created_at?.split('T')[0]
+            const repo = e.repo?.full_name
+            return `${date}-${repo}`
+          }))
+          
+          // Add commit events that don't duplicate existing events
+          commitEvents.forEach((commitEvent: any) => {
+            const date = commitEvent.created_at?.split('T')[0]
+            const repo = commitEvent.repo?.full_name
+            const key = `${date}-${repo}`
+            if (!existingEventKeys.has(key)) {
+              eventsData.push(commitEvent)
+            }
+          })
+          
+          // Sort events by date (newest first)
+          eventsData.sort((a: any, b: any) => 
+            new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+          )
         }
 
         // Process events into activity timeline
@@ -474,26 +563,36 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
 
   // Group contributions by week for heatmap display
   const groupContributionsByWeek = (contributions: Contribution[]) => {
+    if (contributions.length === 0) return []
+    
+    // Sort contributions by date
+    const sorted = [...contributions].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    )
+    
     const weeks: Contribution[][] = []
     let currentWeek: Contribution[] = []
+    let lastDate: Date | null = null
     
-    contributions.forEach((cont, index) => {
+    sorted.forEach((cont) => {
       const date = new Date(cont.date)
-      const dayOfWeek = date.getDay()
       
-      // Start new week on Sunday
-      if (dayOfWeek === 0 && currentWeek.length > 0) {
-        weeks.push(currentWeek)
+      // If this is the first contribution or there's a gap of more than 7 days, start a new week
+      if (lastDate === null || (date.getTime() - lastDate.getTime()) > 7 * 24 * 60 * 60 * 1000) {
+        if (currentWeek.length > 0) {
+          weeks.push(currentWeek)
+        }
         currentWeek = []
       }
       
       currentWeek.push(cont)
-      
-      // Push last week if we're at the end
-      if (index === contributions.length - 1) {
-        weeks.push(currentWeek)
-      }
+      lastDate = date
     })
+    
+    // Push the last week
+    if (currentWeek.length > 0) {
+      weeks.push(currentWeek)
+    }
     
     return weeks
   }
@@ -636,54 +735,67 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
             {/* Contributions Heatmap */}
-            {stats && (
+            {stats && stats.contributions.length > 0 && (
               <div className="bg-[var(--vscode-sidebar)] border border-[var(--vscode-border)] rounded-xl p-6">
                 <div className="mb-4">
                   <h2 className="text-xl font-bold text-[var(--vscode-text)] mb-2">
-                    {stats.contributions.reduce((sum, c) => sum + c.count, 0)} contributions in the last year
+                    {stats.contributions.reduce((sum, c) => sum + c.count, 0)} contributions
+                    {stats.contributions.length > 0 && (
+                      <span className="text-sm font-normal text-[var(--vscode-text-muted)] ml-2">
+                        (from {new Date(Math.min(...stats.contributions.map(c => new Date(c.date).getTime()))).toLocaleDateString()} to {new Date(Math.max(...stats.contributions.map(c => new Date(c.date).getTime()))).toLocaleDateString()})
+                      </span>
+                    )}
                   </h2>
                   <p className="text-sm text-[var(--vscode-text-muted)]">
-                    Learn how we count contributions
+                    Showing real contribution data from GitHub
                   </p>
                 </div>
                 
-                <div className="overflow-x-auto">
-                  <div className="flex gap-1 min-w-max pb-4">
-                    {groupContributionsByWeek(stats.contributions).map((week, weekIndex) => (
-                      <div key={weekIndex} className="flex flex-col gap-1">
-                        {week.map((cont, dayIndex) => {
-                          const date = new Date(cont.date)
-                          const isToday = date.toDateString() === new Date().toDateString()
-                          return (
-                            <div
-                              key={`${cont.date}-${dayIndex}`}
-                              className="w-3 h-3 rounded-sm"
-                              style={{
-                                backgroundColor: getContributionColor(cont.level),
-                                border: isToday ? '1px solid var(--vscode-blue)' : 'none'
-                              }}
-                              title={`${cont.count} contributions on ${date.toLocaleDateString()}`}
-                            />
-                          )
-                        })}
+                {stats.contributions.length > 0 ? (
+                  <>
+                    <div className="overflow-x-auto">
+                      <div className="flex gap-1 min-w-max pb-4">
+                        {groupContributionsByWeek(stats.contributions).map((week, weekIndex) => (
+                          <div key={weekIndex} className="flex flex-col gap-1">
+                            {week.map((cont, dayIndex) => {
+                              const date = new Date(cont.date)
+                              const isToday = date.toDateString() === new Date().toDateString()
+                              return (
+                                <div
+                                  key={`${cont.date}-${dayIndex}`}
+                                  className="w-3 h-3 rounded-sm"
+                                  style={{
+                                    backgroundColor: getContributionColor(cont.level),
+                                    border: isToday ? '1px solid var(--vscode-blue)' : 'none'
+                                  }}
+                                  title={`${cont.count} contribution${cont.count !== 1 ? 's' : ''} on ${date.toLocaleDateString()}`}
+                                />
+                              )
+                            })}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-4 text-xs text-[var(--vscode-text-muted)]">
+                      <span>Less</span>
+                      <div className="flex gap-1">
+                        {[0, 1, 2, 3, 4].map(level => (
+                          <div
+                            key={level}
+                            className="w-3 h-3 rounded-sm"
+                            style={{ backgroundColor: getContributionColor(level as 0 | 1 | 2 | 3 | 4) }}
+                          />
+                        ))}
+                      </div>
+                      <span>More</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-[var(--vscode-text-muted)]">
+                    No contribution data available. Contributions will appear here as activity is detected.
                   </div>
-                </div>
-                
-                <div className="flex items-center justify-between mt-4 text-xs text-[var(--vscode-text-muted)]">
-                  <span>Less</span>
-                  <div className="flex gap-1">
-                    {[0, 1, 2, 3, 4].map(level => (
-                      <div
-                        key={level}
-                        className="w-3 h-3 rounded-sm"
-                        style={{ backgroundColor: getContributionColor(level as 0 | 1 | 2 | 3 | 4) }}
-                      />
-                    ))}
-                  </div>
-                  <span>More</span>
-                </div>
+                )}
               </div>
             )}
 
