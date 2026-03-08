@@ -250,12 +250,20 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
               eventsData = backendData.events || backendData.data?.events || []
               hasBackendAccess = true
               console.log(`✅ Fetched ${reposData.length} repos and ${eventsData.length} events from backend API`)
-              console.log('📅 Sample events:', eventsData.slice(0, 3).map((e: any) => ({
+              console.log('📅 Sample events:', eventsData.slice(0, 5).map((e: any) => ({
                 type: e.type,
                 date: e.created_at,
-                repo: e.repo?.full_name,
+                repo: {
+                  name: e.repo?.name,
+                  full_name: e.repo?.full_name,
+                  private: e.repo?.private,
+                  owner: e.repo?.owner,
+                  original_name: e.repo?.original_name,
+                  original_full_name: e.repo?.original_full_name
+                },
                 commits: e.payload?.commits?.length || 0
               })))
+              console.log('🔍 Unique repos in events:', [...new Set(eventsData.map((e: any) => e.repo?.full_name || e.repo?.name).filter(Boolean))].slice(0, 10))
             }
           } catch (err) {
             console.log('Backend API not available, falling back to public API:', err)
