@@ -193,6 +193,80 @@
       ]
     }
   ],
+  "projects": [
+    {
+      "id": 1,
+      "name": "Turris ERP System",
+      "slug": "turris-erp",
+      "description": "Comprehensive enterprise resource planning system for managing day-to-day business activities with real-time data processing and advanced reporting capabilities.",
+      "technologies": ["Angular", "DevExtreme", "Node.js", "PostgreSQL", "WebSockets", "TypeScript"],
+      "icon": "Building2",
+      "color": "from-blue-400 to-cyan-500",
+      "status": "Production",
+      "year": "2023-2025",
+      "featured": true
+    },
+    {
+      "id": 2,
+      "name": "EntityConnect Platform",
+      "slug": "entityconnect",
+      "description": "Entity management & communications app with membership management, event registration, online donations, and workflow automation for organizations.",
+      "technologies": ["Angular", "Kendo UI", "SailsJS", "Node.js", "MySQL", "PWA"],
+      "icon": "Users",
+      "color": "from-green-400 to-emerald-500",
+      "status": "Live",
+      "year": "2018-2022",
+      "featured": true
+    },
+    {
+      "id": 3,
+      "name": "Abgadya Learning Platform",
+      "slug": "abgadya",
+      "description": "Progressive Web App for high school students providing educational content through interactive books, videos, lessons, and exercises with offline capabilities.",
+      "technologies": ["Angular 10", "Ionic", "PHP", "Laravel", "PWA", "WordPress"],
+      "icon": "GraduationCap",
+      "color": "from-purple-400 to-violet-500",
+      "status": "Active",
+      "year": "2018-2021",
+      "featured": true
+    },
+    {
+      "id": 4,
+      "name": "Rogers Motors",
+      "slug": "rogers-motors",
+      "description": "Automotive dealership management system with inventory tracking, customer management, and sales reporting.",
+      "technologies": ["Angular", "React", "Node.js", "TypeScript"],
+      "icon": "Building2",
+      "color": "from-indigo-400 to-blue-500",
+      "status": "Live",
+      "year": "2023-2025",
+      "featured": false
+    },
+    {
+      "id": 5,
+      "name": "Job Tracker Pro",
+      "slug": "job-tracker-pro",
+      "description": "Professional job application tracking system with resume management, interview scheduling, and analytics dashboard.",
+      "technologies": ["React", "Next.js", "TypeScript", "Tailwind CSS"],
+      "icon": "Calendar",
+      "color": "from-orange-400 to-red-500",
+      "status": "Active",
+      "year": "2024-2025",
+      "featured": false
+    },
+    {
+      "id": 6,
+      "name": "Medical Rep Management System",
+      "slug": "medical-rep",
+      "description": "Healthcare industry solution helping pharmaceutical companies manage sales teams and medical representatives with real-time tracking and reporting.",
+      "technologies": ["Ionic", "Angular 7-10", "Bootstrap", "PHP", "MySQL", "Cross-platform"],
+      "icon": "Stethoscope",
+      "color": "from-red-400 to-pink-500",
+      "status": "Deployed",
+      "year": "2016-2018",
+      "featured": false
+    }
+  ],
   "skills": {
     "languages": [
       "JavaScript",
