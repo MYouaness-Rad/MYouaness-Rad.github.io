@@ -540,54 +540,6 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
   }
 
 
-  // Get activity percentage for quadrant chart
-  const getActivityPercentages = () => {
-    if (!stats) return { commits: 0, pullRequests: 0, reviews: 0, issues: 0 }
-    
-    const total = stats.activityBreakdown.commits + 
-                  stats.activityBreakdown.pullRequests + 
-                  stats.activityBreakdown.reviews + 
-                  stats.activityBreakdown.issues
-    
-    if (total === 0) return { commits: 0, pullRequests: 0, reviews: 0, issues: 0 }
-    
-    return {
-      commits: Math.round((stats.activityBreakdown.commits / total) * 100),
-      pullRequests: Math.round((stats.activityBreakdown.pullRequests / total) * 100),
-      reviews: Math.round((stats.activityBreakdown.reviews / total) * 100),
-      issues: Math.round((stats.activityBreakdown.issues / total) * 100)
-    }
-  }
-
-  // Group activity by month
-  const getGroupedActivityByMonth = () => {
-    if (!stats) return {}
-    
-    const grouped: Record<string, {
-      commits: ActivityEvent[]
-      pullRequests: ActivityEvent[]
-      reviews: ActivityEvent[]
-      issues: ActivityEvent[]
-    }> = {}
-    
-    stats.recentActivity.forEach(event => {
-      const date = new Date(event.date)
-      const monthKey = `${date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
-      
-      if (!grouped[monthKey]) {
-        grouped[monthKey] = {
-          commits: [],
-          pullRequests: [],
-          reviews: [],
-          issues: []
-        }
-      }
-      
-      grouped[monthKey][`${event.type === 'commit' ? 'commits' : event.type === 'pull_request' ? 'pullRequests' : event.type === 'pull_request_review' ? 'reviews' : 'issues'}` as keyof typeof grouped[string]].push(event)
-    })
-    
-    return grouped
-  }
 
   if (loading) {
     return (
@@ -620,8 +572,74 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
     )
   }
 
-  const percentages = getActivityPercentages()
-  const groupedActivity = getGroupedActivityByMonth()
+  // Filter contributions by selected year
+  const filteredContributions = useMemo(() => {
+    if (!stats) return []
+    return stats.contributions.filter(cont => {
+      const year = new Date(cont.date).getFullYear()
+      return year === selectedYear
+    })
+  }, [stats, selectedYear])
+
+  // Filter activity events by selected year
+  const filteredActivityEvents = useMemo(() => {
+    if (!stats) return []
+    return stats.recentActivity.filter(event => {
+      const year = new Date(event.date).getFullYear()
+      return year === selectedYear
+    })
+  }, [stats, selectedYear])
+
+  // Recalculate percentages based on filtered data
+  const percentages = useMemo(() => {
+    if (!filteredActivityEvents.length) return { commits: 0, pullRequests: 0, reviews: 0, issues: 0 }
+    
+    const breakdown = {
+      commits: filteredActivityEvents.filter(e => e.type === 'commit').length,
+      pullRequests: filteredActivityEvents.filter(e => e.type === 'pull_request').length,
+      reviews: filteredActivityEvents.filter(e => e.type === 'pull_request_review').length,
+      issues: filteredActivityEvents.filter(e => e.type === 'issue').length
+    }
+    
+    const total = breakdown.commits + breakdown.pullRequests + breakdown.reviews + breakdown.issues
+    if (total === 0) return { commits: 0, pullRequests: 0, reviews: 0, issues: 0 }
+    
+    return {
+      commits: Math.round((breakdown.commits / total) * 100),
+      pullRequests: Math.round((breakdown.pullRequests / total) * 100),
+      reviews: Math.round((breakdown.reviews / total) * 100),
+      issues: Math.round((breakdown.issues / total) * 100)
+    }
+  }, [filteredActivityEvents])
+
+  // Group filtered activity by month
+  const groupedActivity = useMemo(() => {
+    const grouped: Record<string, {
+      commits: ActivityEvent[]
+      pullRequests: ActivityEvent[]
+      reviews: ActivityEvent[]
+      issues: ActivityEvent[]
+    }> = {}
+    
+    filteredActivityEvents.forEach(event => {
+      const date = new Date(event.date)
+      const monthKey = `${date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
+      
+      if (!grouped[monthKey]) {
+        grouped[monthKey] = {
+          commits: [],
+          pullRequests: [],
+          reviews: [],
+          issues: []
+        }
+      }
+      
+      grouped[monthKey][`${event.type === 'commit' ? 'commits' : event.type === 'pull_request' ? 'pullRequests' : event.type === 'pull_request_review' ? 'reviews' : 'issues'}` as keyof typeof grouped[string]].push(event)
+    })
+    
+    return grouped
+  }, [filteredActivityEvents])
+
   const activityMonths = Object.keys(groupedActivity).sort((a, b) => {
     return new Date(b).getTime() - new Date(a).getTime()
   })
@@ -643,9 +661,9 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
             </div>
             <div className="text-left md:text-right">
               <div className="text-xl md:text-2xl font-bold text-[var(--vscode-text)]">
-                {stats?.contributions.reduce((sum, c) => sum + c.count, 0) || 0} contributions
+                {filteredContributions.reduce((sum, c) => sum + c.count, 0) || 0} contributions
               </div>
-              <div className="text-xs md:text-sm text-[var(--vscode-text-muted)]">in the last year</div>
+              <div className="text-xs md:text-sm text-[var(--vscode-text-muted)]">in {selectedYear}</div>
             </div>
           </div>
         </div>
@@ -678,14 +696,14 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
             {/* Contributions Heatmap */}
-            {stats && <ContributionsHeatmap contributions={stats.contributions} />}
+            {stats && <ContributionsHeatmap contributions={filteredContributions} />}
 
             {/* Activity Overview */}
             {stats && (
               <div className="bg-[var(--vscode-sidebar)] border border-[var(--vscode-border)] rounded-xl p-6">
-                <h2 className="text-xl font-bold text-[var(--vscode-text)] mb-4">Contributed to</h2>
+                <h2 className="text-xl font-bold text-[var(--vscode-text)] mb-4">Contributed to ({selectedYear})</h2>
                 <div className="space-y-2 mb-6">
-                  {stats.contributedRepos.slice(0, 3).map((repoFullName, index) => {
+                  {Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName))).slice(0, 3).map((repoFullName, index) => {
                     const repo = repos.find(r => r.full_name === repoFullName)
                     const isPrivate = repo?.visibility === 'private'
                     const displayName = isPrivate ? 'Private Repo' : repoFullName.split('/')[1]
@@ -696,9 +714,9 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
                       </div>
                     )
                   })}
-                  {stats.contributedRepos.length > 3 && (
+                  {Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName))).length > 3 && (
                     <p className="text-sm text-[var(--vscode-text-muted)]">
-                      and {stats.contributedRepos.length - 3} other repositories
+                      and {Array.from(new Set(filteredActivityEvents.map(e => e.repoFullName))).length - 3} other repositories
                     </p>
                   )}
                 </div>
