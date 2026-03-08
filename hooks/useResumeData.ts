@@ -81,7 +81,16 @@ export const useResumeData = () => {
         setLoading(true)
         setError(null)
         
-        // Try to fetch from API if available, otherwise use local data
+        // Use local resume data first (for static sites)
+        // This ensures the latest data including Radwell experience is always shown
+        if (localResumeData) {
+          console.log('Using local resume data, first experience:', localResumeData.experience?.[0]?.company)
+          setResumeData(localResumeData as ResumeData)
+          setLoading(false)
+          return
+        }
+        
+        // Fallback: Try to fetch from API if local data is not available
         if (config.API_BASE_URL && typeof window !== 'undefined') {
           try {
             const controller = new AbortController()
@@ -113,17 +122,13 @@ export const useResumeData = () => {
               }
             }
           } catch (apiError) {
-            // API fetch failed, fall through to use local data
-            console.log('API fetch failed, using local resume data:', apiError)
+            // API fetch failed
+            console.log('API fetch failed:', apiError)
           }
         }
         
-        // Use local resume data (for static sites or as fallback)
-        if (localResumeData) {
-          setResumeData(localResumeData as ResumeData)
-        } else {
-          throw new Error('No resume data available')
-        }
+        // If we get here, no data was available
+        throw new Error('No resume data available')
       } catch (err) {
         console.error('Error loading resume data:', err)
         setError(err instanceof Error ? err.message : 'Failed to load resume data')
