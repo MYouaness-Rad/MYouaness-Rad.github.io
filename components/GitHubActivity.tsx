@@ -237,15 +237,21 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
 
         if (config.API_BASE_URL) {
           try {
-            const backendResponse = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.GITHUB_ACTIVITY}`)
+            // Build query params with username and emails
+            const params = new URLSearchParams({
+              username: username,
+              ...(authorEmails.length > 0 && { emails: authorEmails.join(',') })
+            })
+            const backendResponse = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.GITHUB_ACTIVITY}?${params.toString()}`)
             if (backendResponse.ok) {
               const backendData = await backendResponse.json()
-              reposData = backendData.repos || []
-              eventsData = backendData.events || []
+              reposData = backendData.repos || backendData.data?.repos || []
+              eventsData = backendData.events || backendData.data?.events || []
               hasBackendAccess = true
+              console.log(`✅ Fetched ${reposData.length} repos and ${eventsData.length} events from backend API`)
             }
           } catch (err) {
-            console.log('Backend API not available, falling back to public API')
+            console.log('Backend API not available, falling back to public API:', err)
           }
         }
 
