@@ -148,24 +148,61 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
         setLoading(true)
         setError(null)
 
-        // Use unified backend endpoint
-        const response = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.GITHUB_ACTIVITY}&username=${username}`)
+        // Fetch directly from GitHub API
+        const reposResponse = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=100`)
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch GitHub data: ${response.status}`)
+        if (!reposResponse.ok) {
+          if (reposResponse.status === 404) {
+            throw new Error(`GitHub user "${username}" not found`)
+          }
+          throw new Error(`Failed to fetch GitHub data: ${reposResponse.status}`)
         }
 
-        const result = await response.json()
+        const reposData = await reposResponse.json()
         
-        if (!result.success) {
-          throw new Error(result.message || 'Failed to fetch GitHub data')
-        }
+        // Calculate stats
+        const totalStars = reposData.reduce((sum: number, repo: any) => sum + repo.stargazers_count, 0)
+        const totalForks = reposData.reduce((sum: number, repo: any) => sum + repo.forks_count, 0)
+        const publicRepos = reposData.filter((r: any) => r.visibility === 'public').length
+        const privateRepos = reposData.filter((r: any) => r.visibility === 'private').length
+        
+        // Calculate language distribution
+        const languages: Record<string, number> = {}
+        reposData.forEach((repo: any) => {
+          if (repo.language) {
+            languages[repo.language] = (languages[repo.language] || 0) + 1
+          }
+        })
 
-        const { repos, stats, user } = result.data
+        // Transform repos to match expected format
+        const repos: Repo[] = reposData.map((repo: any) => ({
+          name: repo.name,
+          html_url: repo.html_url,
+          description: repo.description || '',
+          language: repo.language || '',
+          stargazers_count: repo.stargazers_count,
+          forks_count: repo.forks_count,
+          commits_count: 0, // GitHub API doesn't provide this directly
+          updated_at: repo.updated_at,
+          size: repo.size,
+          topics: repo.topics || [],
+          visibility: repo.visibility || 'public'
+        }))
+
+        const stats: GitHubStats = {
+          totalRepos: reposData.length,
+          totalStars,
+          totalForks,
+          totalCommits: 0, // Would need additional API calls
+          languages,
+          recentActivity: [],
+          privateRepos,
+          publicRepos
+        }
 
         setRepos(repos)
         setStats(stats)
-        setHasPrivateAccess(stats.privateRepos > 0)
+        setHasPrivateAccess(privateRepos > 0)
       } catch (err) {
         console.error('GitHub API Error:', err)
         setError(err instanceof Error ? err.message : 'Failed to fetch GitHub data')
