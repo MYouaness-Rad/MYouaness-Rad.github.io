@@ -541,40 +541,7 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
   }
 
-
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[var(--vscode-editor-bg)] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--vscode-blue)] mx-auto mb-4"></div>
-          <p className="text-[var(--vscode-text)]">Loading GitHub activity...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[var(--vscode-editor-bg)] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Github className="w-8 h-8 text-red-500" />
-          </div>
-          <h2 className="text-xl font-semibold text-[var(--vscode-text)] mb-2">Error Loading GitHub Data</h2>
-          <p className="text-[var(--vscode-text-muted)] mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-[var(--vscode-blue)] text-white rounded-lg hover:bg-[var(--vscode-blue)]/80 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // Filter contributions by selected year
+  // Filter contributions by selected year (must be called before early returns)
   const filteredContributions = useMemo(() => {
     if (!stats) return []
     return stats.contributions.filter(cont => {
@@ -645,6 +612,38 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
   const activityMonths = Object.keys(groupedActivity).sort((a, b) => {
     return new Date(b).getTime() - new Date(a).getTime()
   })
+
+  // Early returns must come AFTER all hooks
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--vscode-editor-bg)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--vscode-blue)] mx-auto mb-4"></div>
+          <p className="text-[var(--vscode-text)]">Loading GitHub activity...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[var(--vscode-editor-bg)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Github className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-xl font-semibold text-[var(--vscode-text)] mb-2">Error Loading GitHub Data</h2>
+          <p className="text-[var(--vscode-text-muted)] mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-[var(--vscode-blue)] text-white rounded-lg hover:bg-[var(--vscode-blue)]/80 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[var(--vscode-editor-bg)] text-[var(--vscode-editor-foreground)]">
