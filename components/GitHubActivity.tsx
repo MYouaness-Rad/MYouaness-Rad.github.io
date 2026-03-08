@@ -621,7 +621,7 @@ const GitHubActivity: React.FC<GitHubActivityProps> = ({ username, emails = [] }
           totalForks,
           totalCommits: activityBreakdown.commits,
           languages,
-          recentActivity: activityEvents.slice(0, 50), // Last 50 events
+          recentActivity: activityEvents, // Store all events (not just 50) so we can filter by year properly
           privateRepos,
           publicRepos,
           contributions,
