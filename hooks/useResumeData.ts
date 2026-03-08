@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { config } from '@/lib/config'
+import localResumeData from '@/data/resume.json'
 
 interface ResumeData {
   personalInfo: {
@@ -76,66 +77,58 @@ export const useResumeData = () => {
 
   useEffect(() => {
     const fetchResumeData = async () => {
-      let timeoutId: NodeJS.Timeout | null = null
-      
       try {
         setLoading(true)
         setError(null)
         
-        // Create abort controller for timeout
-        const controller = new AbortController()
-        
-        // Set 15 second timeout
-        timeoutId = setTimeout(() => {
-          controller.abort()
-        }, 15000)
-        
-        const response = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.RESUME}`, {
-          signal: controller.signal
-        })
-        
-        // Clear timeout on successful response
-        if (timeoutId) clearTimeout(timeoutId)
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        
-        const result = await response.json()
-        
-               if (result.success) {
-                 // Transform backend data to match frontend structure
-                 const transformedData = {
-                   ...result.data,
-                   personalInfo: {
-                     ...result.data.personalInfo,
-                     summary: result.data.summary || result.data.personalInfo?.summary || ''
-                   },
-                   projects: result.data.projects || []
-                 }
-                 setResumeData(transformedData)
-               } else {
-                 throw new Error(result.message || 'Failed to fetch resume data')
-               }
-      } catch (err) {
-        // Clear timeout if error occurs
-        if (timeoutId) clearTimeout(timeoutId)
-        
-        console.error('Error fetching resume data:', err)
-        
-        // Determine error message
-        let errorMessage = 'Unknown error'
-        if (err instanceof Error) {
-          if (err.name === 'AbortError') {
-            errorMessage = 'Request timeout - The server is taking too long to respond'
-          } else {
-            errorMessage = err.message
+        // Try to fetch from API if available, otherwise use local data
+        if (config.API_BASE_URL && typeof window !== 'undefined') {
+          try {
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => {
+              controller.abort()
+            }, 5000) // Shorter timeout for static sites
+            
+            const response = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.RESUME}`, {
+              signal: controller.signal
+            })
+            
+            clearTimeout(timeoutId)
+            
+            if (response.ok) {
+              const result = await response.json()
+              if (result.success) {
+                // Transform backend data to match frontend structure
+                const transformedData = {
+                  ...result.data,
+                  personalInfo: {
+                    ...result.data.personalInfo,
+                    summary: result.data.summary || result.data.personalInfo?.summary || ''
+                  },
+                  projects: result.data.projects || []
+                }
+                setResumeData(transformedData)
+                setLoading(false)
+                return
+              }
+            }
+          } catch (apiError) {
+            // API fetch failed, fall through to use local data
+            console.log('API fetch failed, using local resume data:', apiError)
           }
         }
         
-        setError(errorMessage)
+        // Use local resume data (for static sites or as fallback)
+        if (localResumeData) {
+          setResumeData(localResumeData as ResumeData)
+        } else {
+          throw new Error('No resume data available')
+        }
+      } catch (err) {
+        console.error('Error loading resume data:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load resume data')
         
-        // Fallback to empty data structure
+        // Final fallback to empty data structure
         setResumeData({
           personalInfo: {
             name: "",
