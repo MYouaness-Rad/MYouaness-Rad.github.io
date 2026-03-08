@@ -223,6 +223,7 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
         // Try backend API first for private repos
         let reposData: any[] = []
         let eventsData: any[] = []
+        let commitEvents: any[] = []
         let hasBackendAccess = false
 
         if (config.API_BASE_URL) {
@@ -270,7 +271,7 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
             .slice(0, 10)
           
           // Fetch commits with rate limiting (sequential with delay)
-          const commitEvents: any[] = []
+          commitEvents = []
           for (const repo of topRepos) {
             try {
               // Fetch commits from the last year, authored by the user
