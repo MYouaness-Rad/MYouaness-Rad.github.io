@@ -224,6 +224,7 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
         let reposData: any[] = []
         let eventsData: any[] = []
         let commitEvents: any[] = []
+        let topRepos: any[] = []
         let hasBackendAccess = false
 
         if (config.API_BASE_URL) {
@@ -266,7 +267,7 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
 
           // Fetch commits from repositories to get more historical data
           // Limit to top 10 most recently updated repos to avoid rate limits
-          const topRepos = reposData
+          topRepos = reposData
             .filter((r: any) => r.visibility === 'public' && !r.fork)
             .slice(0, 10)
           
@@ -477,7 +478,7 @@ const GitHubActivity: React.FC<{ username: string }> = ({ username }) => {
             earliest: contributions[0]?.date,
             latest: contributions[contributions.length - 1]?.date
           } : 'No contributions found',
-          reposFetched: topRepos.length,
+          reposFetched: topRepos?.length || 0,
           note: 'All data is fetched from GitHub API - no dummy data'
         })
 
